@@ -243,7 +243,7 @@ SymRnsNumber SymRnsNumber::round(Positional_Int b) const {
         // поразрядно делим копию числа на x
         aq.a[i] = mod_sym(aq.a[i] * mod_inverse(b, pi), pi);
     }
-    std::cout << "aq=" << aq.to_positional() << ' ' << aq << " rank=" << aq.get_rank() << std::endl;
+    std::cout << "aq=" << aq.to_positional() << ' ' << aq << " ra=" << aq.get_rank() << std::endl;
     Positional_Int r_xa = aq.get_rank_x(b);  // ранг числа (aq * x)
     // k - разница в рангах числа a и 10*(a/10)
     Positional_Int k = get_rank() - r_xa;
@@ -261,7 +261,7 @@ int main() {
 
     // примеры округления
     //SymRnsNumber a{{2, 3, 8}, base};
-    SymRnsNumber a{-100, base};
+    SymRnsNumber a{100, base};
     std::cout << a.to_positional() << ' ' << a << " rank=" << a.get_rank() << std::endl;
 
     SymRnsNumber b = a.round(10);

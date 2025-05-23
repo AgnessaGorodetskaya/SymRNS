@@ -44,6 +44,7 @@ class RnsNumber {
     bool operator!=(const RnsNumber& y) const;  // (this != y)
     friend std::ostream& operator<<(std::ostream& os, const RnsNumber& y);  // для вывода на cout
     Positional_Float to_positional(Positional_Int* x_int = NULL) const;  // в позиционное представление
+    Positional_Int to_positional_int() const;  // в позиционное представление
     Positional_Int get_rank() const; // получение ранга числа
     Positional_Int get_rank_x(Positional_Int x) const; // получение ранга числа * x
     RnsNumber round(Positional_Int b) const;  // округление к ближайшему кратному x
@@ -63,19 +64,24 @@ RnsBase::RnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()) {
 
     std::cout << "Поиск ортогональных базисов..." << std::endl;
     for (size_t i = 0; i < p.size(); ++i) {
-        m[i] = RnsNumber::mod_inverse(P / p[i], p[i]);  // вес i-го ортогонального базиса
-        B[i] = m[i] * P / p[i];  // i-й ортогональный базис
+        Positional_Int Pi = P / p[i];
+        m[i] = RnsNumber::mod_inverse(Pi, p[i]);  // вес i-го ортогонального базиса
+        B[i] = m[i] * Pi;  // i-й ортогональный базис
         RnsNumber B_rns{B[i], *this, 1};
         std::cout << "Ортогональный базис B" << i+1 << '=' << B[i] << ' ' << B_rns << ", вес базиса m" << i+1 << "=" << m[i] << std::endl;
     }
 }
 
-Positional_Float RnsNumber::to_positional(Positional_Int* x_int) const {
+Positional_Int RnsNumber::to_positional_int() const {
     Positional_Int res_int = 0;
     for (size_t i = 0; i < a.size(); ++i) {
         res_int += a[i] * base.get().B[i];
     }
-    res_int = mod(res_int, base.get().P);  // по симметричному модулю максимального представления
+    return mod(res_int, base.get().P);  // по модулю максимального представления
+}
+
+Positional_Float RnsNumber::to_positional(Positional_Int* x_int) const {
+    Positional_Int res_int = to_positional_int();
     if (x_int) *x_int = res_int;  // опционально целочисленный числитель возвращаем по указателю в параметре
     return static_cast<Positional_Float>(res_int) / q_int;
 }
@@ -101,18 +107,19 @@ template<typename ModType> ModType RnsNumber::mod(Positional_Int x, ModType p) {
 }
 
 Positional_Int RnsNumber::mod_inverse(Positional_Int a, Positional_Int p) {
-    Positional_Int p0 = p, t, q;
+    Positional_Int p1 = p, t, q;
     Positional_Int x0 = 0, x1 = 1;
-    if (p == 1) return 0;
+    a = mod(a, p);
+    if (p == 1 || a == 0) return 0;
     // Алгоритм Евклида
     while (a > 1) {
-        q = a / p;        // Частное
-        t = p;
-        p = a % p, a = t;
+        q = a / p1; // Частное
+        t = p1;
+        p1 = a % p1, a = t;
         t = x0;
         x0 = x1 - q * x0, x1 = t; // Обновляем x0 и x1
     }
-    if (x1 < 0) x1 += p0; // Обратное может быть отрицательным
+    if (x1 < 0) x1 += p; // Корректируем отрицательное
     return x1;
 }
 
@@ -215,6 +222,7 @@ Positional_Int RnsNumber::get_rank() const {
         pos_int += a[i] * base.get().B[i];
     }
     Positional_Int rank = pos_int / base.get().P;
+    std::cout << "rank of "<< pos_int << "=" << rank << std::endl;
     return rank;
 }
 
@@ -223,9 +231,11 @@ Positional_Int RnsNumber::get_rank_x(Positional_Int x) const { // вычисле
     Positional_Int r_xa = r_a * x;
     std::cout << "r_xa = " << r_a << "*" << x;
     for (size_t i = 0; i < a.size(); ++i) {
-        Positional_Int t = (a[i] * x / base.get().p[i]) * base.get().m[i];
+        Module pi = base.get().p[i];
+        Module ai = a[i];
+        Positional_Int t = (ai * x / base.get().p[i]) * base.get().m[i];
         r_xa -= t;
-        std::cout << '-' << t;
+        std::cout << "- (" << ai << "*" << x << "/" << pi <<") * " << base.get().m[i];
     }
     std::cout << " = " << r_xa << std::endl;
     return r_xa;
@@ -236,7 +246,9 @@ RnsNumber RnsNumber::round(Positional_Int b) const {
     for (size_t i = 0; i < a.size(); ++i) {
         Module pi = base.get().p[i];
         // поразрядно делим копию числа на x
-        aq.a[i] = mod(aq.a[i] * mod_inverse(b, pi), pi);
+        Positional_Int bq = mod_inverse(b, pi);
+        aq.a[i] = mod(aq.a[i] * bq, pi);
+        std::cout << "aq.a[i]=" << aq.a[i] << "*" << "10^-1 mod " <<  pi << "=" << bq << std::endl;
     }
     std::cout << "aq=" << aq.to_positional() << ' ' << aq << " rank=" << aq.get_rank() << std::endl;
     Positional_Int r_xa = aq.get_rank_x(b);  // ранг числа (aq * x)
@@ -254,49 +266,64 @@ RnsNumber RnsNumber::round(Positional_Int b) const {
 int main() {
     RnsBase base{{3, 7, 11}};
 
+    for (int x= -10; x <= 10; ++x) {
+        std::cout << "x=" << x << " x^-1=" << RnsNumber::mod_inverse(x, 5) << std::endl;
+    }
+
     // примеры округления
     // RnsNumber a{{2, 3, 8}, base};
-    RnsNumber a{-100+231/2, base};
-    std::cout << a.to_positional() << ' ' << a << " rank=" << a.get_rank() << std::endl;
+    // RnsNumber a{{2, 5, 8}, base};
+    // std::cout << a.to_positional() << ' ' << a << " rank=" << a.get_rank() << std::endl;
 
-    RnsNumber b = a.round(10);
-    std::cout << b.to_positional() << ' ' << b <<  std::endl;
+    // RnsNumber b = a.round(10);
+    // std::cout << b.to_positional() << ' ' << b <<  std::endl;
 
 
     // тесты
-    Positional_Int q = 1;  // делитель для fixed point тестов
+    // Positional_Int q = 1;  // делитель для fixed point тестов
     bool ok = true;
 
     // // проверки целочисленного округления
-    // Positional_Int rnd = 100;
-    // for (Positional_Int x_int = 0; x_int < base.P; ++x_int) {
+    // Positional_Int rnd = 10;
+    // for (Positional_Int x_int = 110; x_int <= 115; ++x_int) {
     //     RnsNumber x_rns = RnsNumber{x_int, base};
     //     RnsNumber x_rns_round = x_rns.round(rnd);
-    //     Positional_Int x_rns_round_int;
-    //     x_rns_round.to_positional(&x_rns_round_int);
+    //     Positional_Int x_rns_round_int = x_rns_round.to_positional_int();
     //     Positional_Int x_round_int = x_int / rnd * rnd;
     //     if (x_round_int != x_rns_round_int) {
-    //         std::cout << "Error: original " << x_int << "->" << x_round_int <<  " != converted " << x_rns_round_int << std::endl;
+    //         std::cout << "Error: original " << x_int << x_rns << "->" << x_round_int <<  " != converted " << x_rns_round_int << std::endl;
     //         ok = false;
     //     } else {
-    //         // std::cout << "Info: original " << x_int << "->" << x_round_int <<  " == converted " << x_rns_round_int << std::endl;
+    //         std::cout << "Info: original " << x_int << x_rns <<"->" << x_round_int <<  " == converted " << x_rns_round_int << std::endl;
     //     }
     // }
 
-    // проверки обратной конвертации в позиционную ИС
-    for (Positional_Int x_int = 0; x_int < base.P; ++x_int) {
-        Positional_Float x = static_cast<Positional_Float>(x_int) / q;
-        RnsNumber x_rns = RnsNumber{x, base, q};
-        Positional_Int x_pos_int;
-        Positional_Float x_pos = x_rns.to_positional(&x_pos_int);
-        // std::cout << "int: " << x_int << " calc: " << x << " " << x_rns << " conv: " << x_pos
-        //           << " (" << x_pos_int << "/" << q << ")" << std::endl;
-
-        if (fabs(x - x_pos) > 0.001) {
-            std::cout << "Error: original " << x << " != converted " << x_pos << std::endl;
+    // целочисленные проверки конвертации в позиционную ИС
+    for (Positional_Int x_int =0; x_int < base.P; ++x_int) {
+        RnsNumber x_rns = RnsNumber{x_int, base};
+        Positional_Int x_pos_int = x_rns.to_positional_int();
+        if (x_int != x_pos_int) {
+            std::cout << "Error: x: " << x_int << " != x_pos " << x_pos_int << std::endl;
             ok = false;
+        } else {
+            std::cout << "Info: x: " << x_int << " rns: " << x_rns << " x_pos: " << x_pos_int << std::endl;
         }
     }
+
+    // // проверки fixed-point обратной конвертации в позиционную ИС
+    // for (Positional_Int x_int = 0; x_int < base.P; ++x_int) {
+    //     Positional_Float x = static_cast<Positional_Float>(x_int) / q;
+    //     RnsNumber x_rns = RnsNumber{x, base};
+    //     Positional_Int x_pos_int;
+    //     Positional_Float x_pos = x_rns.to_positional(&x_pos_int);
+    //     if (fabs(x - x_pos) > 0.001) {
+    //         std::cout << "Error: original " << x << " != converted " << x_pos << std::endl;
+    //         ok = false;
+    //     } else {
+    //         std::cout << "int: " << x_int << " calc: " << x << " " << x_rns << " conv: " << x_pos
+    //                 << " (" << x_pos_int << ")" << " rank=" << x_rns.get_rank() << std::endl;
+    //     }
+    // }
 
     // for (Positional_Int x_int = -base.P/2; x_int <= base.P/2; ++x_int) {
 

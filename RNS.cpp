@@ -15,6 +15,7 @@ class RnsBase {
     std::vector<Positional_Int> B;  // ортогональные базисы, соответствующие (1; 0; 0..),
                                     // (0; 1; 0...), (0; 0; 1..) для конвертации в позиционную СИ
     std::vector<Positional_Int> m;  // веса ортогональных базисов
+    std::vector<std::vector<Module>> t;  // t_ij для MRC
     Positional_Int P;   // динамический диапазон P = p1 * ... * pn,
                         // кол-во чисел в представлении в данном наборе оснований
                         // ex. 3 * 5 * 7 = 105
@@ -32,7 +33,7 @@ class RnsNumber {
     RnsNumber(Positional_Float x, const RnsBase& base0, Positional_Int q0);    // из вещест. позиционного
     RnsNumber(const Modules& a0, const RnsBase& base0, Positional_Int q0 = 1); // из вектора остатков
     template<typename ModType> static ModType mod(Positional_Int x, ModType p); // математический модуль числа
-    static Positional_Int mod_inverse(Positional_Int a, Positional_Int p); // обратное по модулю число a^-1 mod p
+    template<typename ModType> static ModType mod_inverse(Positional_Int a, ModType p); // обратное по модулю число a^-1 mod p
     RnsNumber& operator+=(const RnsNumber& y);  // this += y
     RnsNumber operator+(const RnsNumber& y) const;  // z = this + y
     RnsNumber& operator-=(const RnsNumber& y);  // this -= y
@@ -45,12 +46,13 @@ class RnsNumber {
     friend std::ostream& operator<<(std::ostream& os, const RnsNumber& y);  // для вывода на cout
     Positional_Float to_positional(Positional_Int* x_int = NULL) const;  // в позиционное представление
     Positional_Int to_positional_int() const;  // в позиционное представление
+    Positional_Int to_positional_int_MRC() const;  // в позиционное представление
     Positional_Int get_rank() const; // получение ранга числа
     Positional_Int get_rank_x(Positional_Int x) const; // получение ранга числа * x
     RnsNumber round(Positional_Int b) const;  // округление к ближайшему кратному x
 };
 
-RnsBase::RnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()) {
+RnsBase::RnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()), t(p.size(), Modules(p.size())) {
     P = 1;
     bool first = true;
     std::cout << "(";
@@ -70,6 +72,14 @@ RnsBase::RnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()) {
         RnsNumber B_rns{B[i], *this, 1};
         std::cout << "Ортогональный базис B" << i+1 << '=' << B[i] << ' ' << B_rns << ", вес базиса m" << i+1 << "=" << m[i] << std::endl;
     }
+
+    std::cout << "Поиск t_ij..." << std::endl;
+    for (size_t i = 0; i < p.size(); ++i) {
+        for (size_t j = i + 1; j < p.size(); ++j) {
+            t[i][j] = RnsNumber::mod_inverse(p[i], p[j]);
+            std::cout << "t[" <<i<< "][" << j <<"] = " << t[i][j] << std::endl;
+        }
+    }
 }
 
 Positional_Int RnsNumber::to_positional_int() const {
@@ -78,6 +88,23 @@ Positional_Int RnsNumber::to_positional_int() const {
         res_int += a[i] * base.get().B[i];
     }
     return mod(res_int, base.get().P);  // по модулю максимального представления
+}
+
+Positional_Int RnsNumber::to_positional_int_MRC() const {
+    Modules x(a.size());
+    x[0] = a[0];
+    Positional_Int Ai = x[0], Pi_1 = 1;
+    for (size_t i = 1; i < a.size(); ++i) {
+        x[i] = a[i];
+        for (size_t j = 0; j < i; ++j) {
+            x[i] = (x[i] - x[j]) * base.get().t[j][i];
+        }
+        x[i] = mod(x[i], base.get().p[i]);
+        std::cout << "x"<<i<<" = " << x[i] << std::endl;
+        Pi_1 *= base.get().p[i-1];
+        Ai += x[i] * Pi_1;
+    }
+    return Ai;
 }
 
 Positional_Float RnsNumber::to_positional(Positional_Int* x_int) const {
@@ -106,21 +133,21 @@ template<typename ModType> ModType RnsNumber::mod(Positional_Int x, ModType p) {
     return r;
 }
 
-Positional_Int RnsNumber::mod_inverse(Positional_Int a, Positional_Int p) {
+template<typename ModType> ModType RnsNumber::mod_inverse(Positional_Int x, ModType p) {
     Positional_Int p1 = p, t, q;
     Positional_Int x0 = 0, x1 = 1;
-    a = mod(a, p);
-    if (p == 1 || a == 0) return 0;
+    x = mod(x, p);
+    if (p == 1 || x == 0) return 0;
     // Алгоритм Евклида
-    while (a > 1) {
-        q = a / p1; // Частное
+    while (x > 1) {
+        q = x / p1; // Частное
         t = p1;
-        p1 = a % p1, a = t;
+        p1 = x % p1, x = t;
         t = x0;
         x0 = x1 - q * x0, x1 = t; // Обновляем x0 и x1
     }
     if (x1 < 0) x1 += p; // Корректируем отрицательное
-    return x1;
+    return static_cast<ModType>(x1);
 }
 
 RnsNumber& RnsNumber::operator+=(const RnsNumber& y) {
@@ -264,11 +291,11 @@ RnsNumber RnsNumber::round(Positional_Int b) const {
 }
 
 int main() {
-    RnsBase base{{3, 7, 11}};
+    RnsBase base{{3, 5, 7}};
 
-    for (int x= -10; x <= 10; ++x) {
-        std::cout << "x=" << x << " x^-1=" << RnsNumber::mod_inverse(x, 5) << std::endl;
-    }
+    // for (int x= -10; x <= 10; ++x) {
+    //     std::cout << "x=" << x << " x^-1=" << RnsNumber::mod_inverse(x, 5) << std::endl;
+    // }
 
     // примеры округления
     // RnsNumber a{{2, 3, 8}, base};
@@ -301,9 +328,9 @@ int main() {
     // целочисленные проверки конвертации в позиционную ИС
     for (Positional_Int x_int =0; x_int < base.P; ++x_int) {
         RnsNumber x_rns = RnsNumber{x_int, base};
-        Positional_Int x_pos_int = x_rns.to_positional_int();
+        Positional_Int x_pos_int = x_rns.to_positional_int_MRC();
         if (x_int != x_pos_int) {
-            std::cout << "Error: x: " << x_int << " != x_pos " << x_pos_int << std::endl;
+            std::cout << "Error: x: " << x_int << " rns: " << x_rns << " != x_pos " << x_pos_int << std::endl;
             ok = false;
         } else {
             std::cout << "Info: x: " << x_int << " rns: " << x_rns << " x_pos: " << x_pos_int << std::endl;

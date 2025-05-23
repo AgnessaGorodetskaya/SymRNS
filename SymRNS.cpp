@@ -15,6 +15,7 @@ class SymRnsBase {
     std::vector<Positional_Int> B;  // ортогональные базисы, соответствующие (1; 0; 0..),
                                     // (0; 1; 0...), (0; 0; 1..) для конвертации в позиционную СИ
     std::vector<Positional_Int> m;  // веса ортогональных базисов
+    std::vector<std::vector<Module>> t;  // t_ij для MRC
     Positional_Int P;   // динамический диапазон P = p1 * ... * pn,
                         // кол-во чисел в представлении в данном наборе оснований
                         // ex. 3 * 5 * 7 = 105
@@ -33,7 +34,7 @@ class SymRnsNumber {
     SymRnsNumber(const Modules& a0, const SymRnsBase& base0, Positional_Int q0 = 1); // из вектора остатков
     template<typename ModType> static ModType mod(Positional_Int x, ModType p); // математический модуль числа
     template<typename ModType> static ModType mod_sym(Positional_Int x, ModType p);  // симметричный модуль
-    static Positional_Int mod_inverse_sym(Positional_Int a, Positional_Int p); // обратное по модулю число a^-1 mod p
+    template<typename ModType> static ModType mod_inverse_sym(Positional_Int a, ModType p); // обратное по модулю число a^-1 mod p
     template<typename ModType> static inline ModType modsym_to_mod(ModType a, ModType p) {
         if (a < 0) a += p;
         return a;
@@ -53,6 +54,7 @@ class SymRnsNumber {
     bool operator!=(const SymRnsNumber& y) const;  // (this != y)
     friend std::ostream& operator<<(std::ostream& os, const SymRnsNumber& y);  // для вывода на cout
     Positional_Int to_positional_int() const;  // в позиционное (int) представление
+    Positional_Int to_positional_int_MRC() const;  // в позиционное представление
     Positional_Int to_positional_int0() const;  // в позиционное из СОК (int) представление
     Positional_Float to_positional(Positional_Int* x_int = NULL) const;  // в позиционное представление
     Positional_Int get_rank(bool* sign=NULL) const;  // получение ранга числа
@@ -60,7 +62,7 @@ class SymRnsNumber {
     SymRnsNumber round(Positional_Int b) const;  // округление к ближайшему кратному x
 };
 
-SymRnsBase::SymRnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()) {
+SymRnsBase::SymRnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()), t(p.size(), Modules(p.size())) {
     P = 1;
     bool first = true;
     std::cout << "(";
@@ -80,6 +82,14 @@ SymRnsBase::SymRnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()) {
         SymRnsNumber B_rns{B[i], *this, 1};
         std::cout << "Ортогональный базис B" << i+1 << '=' << B[i] << ' ' << B_rns << ", вес базиса m" << i+1 << "=" << m[i] << std::endl;
     }
+
+    std::cout << "Поиск t_ij..." << std::endl;
+    for (size_t i = 0; i < p.size(); ++i) {
+        for (size_t j = i + 1; j < p.size(); ++j) {
+            t[i][j] = SymRnsNumber::mod_inverse_sym(p[i], p[j]);
+            std::cout << "t[" <<i<< "][" << j <<"] = " << t[i][j] << std::endl;
+        }
+    }
 }
 
 Positional_Int SymRnsNumber::to_positional_int() const {
@@ -88,6 +98,23 @@ Positional_Int SymRnsNumber::to_positional_int() const {
         res_int += a[i] * base.get().B[i];
     }
     return mod_sym(res_int, base.get().P);  // по симметричному модулю динамического диапазона
+}
+
+Positional_Int SymRnsNumber::to_positional_int_MRC() const {
+    Modules x(a.size());
+    x[0] = a[0];
+    Positional_Int Ai = x[0], Pi_1 = 1;
+    for (size_t i = 1; i < a.size(); ++i) {
+        x[i] = a[i];
+        for (size_t j = 0; j < i; ++j) {
+            x[i] = (x[i] - x[j]) * base.get().t[j][i];
+        }
+        x[i] = mod_sym(x[i], base.get().p[i]);
+        std::cout << "x"<<i<<" = " << x[i] << std::endl;
+        Pi_1 *= base.get().p[i-1];
+        Ai += x[i] * Pi_1;
+    }
+    return Ai;
 }
 
 Positional_Int SymRnsNumber::to_positional_int0() const {  // воспринимать как несимметричное представление
@@ -133,23 +160,23 @@ template<typename ModType> ModType SymRnsNumber::mod_sym(Positional_Int x, ModTy
     return r;
 }
 
-Positional_Int SymRnsNumber::mod_inverse_sym(Positional_Int a, Positional_Int p) {
+template<typename ModType> ModType SymRnsNumber::mod_inverse_sym(Positional_Int x, ModType p) {
     Positional_Int p1 = p, t, q;
     Positional_Int x0 = 0, x1 = 1;
-    a = mod(a, p);
-    if (p == 1 || a == 0) return 0;
+    x = mod(x, p);
+    if (p == 1 || x == 0) return 0;
     // Алгоритм Евклида
-    while (a > 1) {
-        q = a / p1; // Частное
+    while (x > 1) {
+        q = x / p1; // Частное
         t = p1;
-        p1 = a % p1, a = t;
+        p1 = x % p1, x = t;
         t = x0;
         x0 = x1 - q * x0, x1 = t; // Обновляем x0 и x1
     }
     Positional_Int p_half = p / 2;  // вводим в симметричный диапазон
     if (x1 > p_half) { x1 -= p; }
     else if (x1 < -p_half) { x1 += p; }
-    return x1;
+    return static_cast<ModType>(x1);
 }
 
 SymRnsNumber& SymRnsNumber::operator+=(const SymRnsNumber& y) {
@@ -326,11 +353,11 @@ int floor_int_to_10(int x) {
 }
 
 int main() {
-    SymRnsBase base{{3, 7, 11}};
+    SymRnsBase base{{3, 5, 7}};
 
-    for (int x=-10; x <=10; ++x) {
-        std::cout << "x=" << x << " x^-1=" << SymRnsNumber::mod_inverse_sym(x, 5) << std::endl;
-    }
+    // for (int x=-10; x <=10; ++x) {
+    //     std::cout << "x=" << x << " x^-1=" << SymRnsNumber::mod_inverse_sym(x, 5) << std::endl;
+    // }
 
     // примеры округления
     //SymRnsNumber a{{2, 3, 8}, base};
@@ -366,9 +393,9 @@ int main() {
     // целочисленные проверки конвертации в позиционную ИС
     for (Positional_Int x_int = -base.P / 2; x_int <= base.P / 2; ++x_int) {
         SymRnsNumber x_rns = SymRnsNumber{x_int, base};
-        Positional_Int x_pos_int = x_rns.to_positional_int();
+        Positional_Int x_pos_int = x_rns.to_positional_int_MRC();
         if (x_int != x_pos_int) {
-            std::cout << "Error: x: " << x_int << " != x_pos " << x_pos_int << std::endl;
+            std::cout << "Error: x: " << x_int << " rns: " << x_rns << " != x_pos " << x_pos_int << std::endl;
             ok = false;
         } else {
             std::cout << "Info: x: " << x_int << " rns: " << x_rns << " x_pos: " << x_pos_int << std::endl;

@@ -382,17 +382,17 @@ int main() {
     bool ok = true;
 
     // целочисленные проверки конвертации в позиционную ИС
-for (Positional_Int x_pos = -base.P / 2; x_pos <= base.P / 2; ++x_pos) {
-    SymRnsNumber x_rns = SymRnsNumber{x_pos, base};
-    Positional_Int x_pos_ort = x_rns.to_positional_ort();
-    Positional_Int x_pos_mrc = x_rns.to_positional_mrc();
-    if (x_pos != x_pos_ort || x_pos != x_pos_mrc) {
-        std::cout << "ОШИБКА: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
-        ok = false;
-    } else {
-        std::cout << "ИНФО: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
+    for (Positional_Int x_pos = -base.P / 2; x_pos <= base.P / 2; ++x_pos) {
+        SymRnsNumber x_rns = SymRnsNumber{x_pos, base};
+        Positional_Int x_pos_ort = x_rns.to_positional_ort();
+        Positional_Int x_pos_mrc = x_rns.to_positional_mrc();
+        if (x_pos != x_pos_ort || x_pos != x_pos_mrc) {
+            std::cout << "ОШИБКА: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
+            ok = false;
+        } else {
+            std::cout << "ИНФО: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
+        }
     }
-}
 
     // // // проверки целочисленного округления
     // Positional_Int rnd = 10;

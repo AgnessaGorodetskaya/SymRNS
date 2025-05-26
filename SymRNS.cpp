@@ -2,6 +2,7 @@
 #include <iostream>
 #include <numeric>
 #include <vector>
+#include <iomanip>
 
 typedef int32_t Positional_Int;       // позиционное целочисленное
 typedef float Positional_Float;       // позиционное вещественное
@@ -53,8 +54,8 @@ class SymRnsNumber {
     bool operator==(const SymRnsNumber& y) const;  // (this == y)
     bool operator!=(const SymRnsNumber& y) const;  // (this != y)
     friend std::ostream& operator<<(std::ostream& os, const SymRnsNumber& y);  // для вывода на cout
-    Positional_Int to_positional_int() const;  // в позиционное (int) представление
-    Positional_Int to_positional_int_MRC() const;  // в позиционное представление
+    Positional_Int to_positional_ort() const;  // в позиционное (int) представление
+    Positional_Int to_positional_mrc() const;  // в позиционное представление MRC
     Positional_Int to_positional_int0() const;  // в позиционное из СОК (int) представление
     Positional_Float to_positional(Positional_Int* x_int = NULL) const;  // в позиционное представление
     Positional_Int get_rank(bool* sign=NULL) const;  // получение ранга числа
@@ -74,46 +75,55 @@ SymRnsBase::SymRnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()), t(p
     }
     std::cout << ") P=" << P << std::endl;
 
-    std::cout << "Поиск ортогональных базисов..." << std::endl;
     for (size_t i = 0; i < p.size(); ++i) {
         Positional_Int Pi = P / p[i];
         m[i] = SymRnsNumber::mod_inverse_sym(Pi, p[i]);  // вес i-го ортогонального базиса
         B[i] = m[i] * Pi;  // i-й ортогональный базис
         SymRnsNumber B_rns{B[i], *this, 1};
-        std::cout << "Ортогональный базис B" << i+1 << '=' << B[i] << ' ' << B_rns << ", вес базиса m" << i+1 << "=" << m[i] << std::endl;
+        std::cout << "ORT: Ортогональный базис B" << i+1 << '=' << B[i] << ' ' << B_rns << ", вес базиса m" << i+1 << "=" << m[i] << std::endl;
     }
 
-    std::cout << "Поиск t_ij..." << std::endl;
     for (size_t i = 0; i < p.size(); ++i) {
         for (size_t j = i + 1; j < p.size(); ++j) {
             t[i][j] = SymRnsNumber::mod_inverse_sym(p[i], p[j]);
-            std::cout << "t[" <<i<< "][" << j <<"] = " << t[i][j] << std::endl;
+            std::cout << "MRC: t[" << i+1 << "][" << j+1 <<"] = " << t[i][j] << std::endl;
         }
     }
 }
 
-Positional_Int SymRnsNumber::to_positional_int() const {
-    Positional_Int res_int = 0;
+Positional_Int SymRnsNumber::to_positional_ort() const {
+    Positional_Int sm = 0;
     for (size_t i = 0; i < a.size(); ++i) {
-        res_int += a[i] * base.get().B[i];
+        sm += a[i] * base.get().B[i];
     }
-    return mod_sym(res_int, base.get().P);  // по симметричному модулю динамического диапазона
+    Positional_Int A = mod_sym(sm, base.get().P);
+    Module rank = static_cast<Module>((sm - A) / base.get().P);
+    std::cout << std::endl << "ORT: " << sm << " mod_sym " << base.get().P << " = " << A << ", ранг=" << rank <<std::endl;
+    return A;  // по симметричному модулю динамического диапазона
 }
 
-Positional_Int SymRnsNumber::to_positional_int_MRC() const {
+Positional_Int SymRnsNumber::to_positional_mrc() const {
     Modules x(a.size());
     x[0] = a[0];
-    Positional_Int Ai = x[0], Pi_1 = 1;
+    std::cout << "MRC: (x1 = " << x[0] << ") +" << std::endl;    
+    Positional_Int Ai = x[0], Pi_1 = 1, xi;
     for (size_t i = 1; i < a.size(); ++i) {
-        x[i] = a[i];
+        xi = a[i];
+        std::cout << "MRC: (x" << i+1 << " = (";
+        for (size_t j = 0; j < i; ++j) std::cout << '(';
+        std::cout << xi;
         for (size_t j = 0; j < i; ++j) {
-            x[i] = (x[i] - x[j]) * base.get().t[j][i];
+            std::cout << " - " << x[j] << ") * " << base.get().t[j][i];            
+            xi = (xi - x[j]) * base.get().t[j][i];
         }
-        x[i] = mod_sym(x[i], base.get().p[i]);
-        std::cout << "x"<<i<<" = " << x[i] << std::endl;
         Pi_1 *= base.get().p[i-1];
-        Ai += x[i] * Pi_1;
+        std::cout << " = " << xi << ") mod_sym " << base.get().p[i];
+        x[i] = mod_sym(xi, base.get().p[i]);
+        std::cout << " = " << x[i] << ") * " << Pi_1;
+        if (i + 1 != a.size()) std::cout << " +" << std::endl;
+        Ai += Pi_1 * x[i];
     }
+    std::cout << " = " << Ai << std::endl;
     return Ai;
 }
 
@@ -127,7 +137,7 @@ Positional_Int SymRnsNumber::to_positional_int0() const {  // восприним
 }
 
 Positional_Float SymRnsNumber::to_positional(Positional_Int* x_int) const {
-    Positional_Int res_int = to_positional_int();
+    Positional_Int res_int = to_positional_ort();
     if (x_int) *x_int = res_int;  // опционально целочисленный числитель возвращаем по указателю в параметре
     return static_cast<Positional_Float>(res_int) / q_int;
 }
@@ -264,10 +274,10 @@ std::ostream& operator<<(std::ostream& os, const SymRnsNumber& y) {
     size_t sz = y.a.size();
     os << '(';
     for (size_t i = 0; i < sz; ++i) {
-        if (i) os << ";";
+        if (i) os << ",";
         os << y.a[i];
     }
-    if (y.q_int != 1) os << ";q=" << y.q_int;
+    if (y.q_int != 1) os << ",q=" << y.q_int;
     os << ')';
     return os;
 }
@@ -353,7 +363,7 @@ int floor_int_to_10(int x) {
 }
 
 int main() {
-    SymRnsBase base{{3, 5, 7}};
+    SymRnsBase base{{3, 7, 11}};
 
     // for (int x=-10; x <=10; ++x) {
     //     std::cout << "x=" << x << " x^-1=" << SymRnsNumber::mod_inverse_sym(x, 5) << std::endl;
@@ -370,6 +380,19 @@ int main() {
     // тесты
     // Positional_Int q = 1;  // делитель для fixed point тестов
     bool ok = true;
+
+    // целочисленные проверки конвертации в позиционную ИС
+for (Positional_Int x_pos = -base.P / 2; x_pos <= base.P / 2; ++x_pos) {
+    SymRnsNumber x_rns = SymRnsNumber{x_pos, base};
+    Positional_Int x_pos_ort = x_rns.to_positional_ort();
+    Positional_Int x_pos_mrc = x_rns.to_positional_mrc();
+    if (x_pos != x_pos_ort || x_pos != x_pos_mrc) {
+        std::cout << "ОШИБКА: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
+        ok = false;
+    } else {
+        std::cout << "ИНФО: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
+    }
+}
 
     // // // проверки целочисленного округления
     // Positional_Int rnd = 10;
@@ -389,18 +412,6 @@ int main() {
     //         std::cout << "Info: original " << x_int << x_rns << "->" << x_round_int <<  " == converted " << x_rns_round_int << std::endl << std::endl;
     //     }
     // }
-
-    // целочисленные проверки конвертации в позиционную ИС
-    for (Positional_Int x_int = -base.P / 2; x_int <= base.P / 2; ++x_int) {
-        SymRnsNumber x_rns = SymRnsNumber{x_int, base};
-        Positional_Int x_pos_int = x_rns.to_positional_int_MRC();
-        if (x_int != x_pos_int) {
-            std::cout << "Error: x: " << x_int << " rns: " << x_rns << " != x_pos " << x_pos_int << std::endl;
-            ok = false;
-        } else {
-            std::cout << "Info: x: " << x_int << " rns: " << x_rns << " x_pos: " << x_pos_int << std::endl;
-        }
-    }
 
     // // fixed point проверки конвертации в позиционную ИС
     // for (Positional_Int x_int = -base.P / 2; x_int <= base.P / 2; ++x_int) {

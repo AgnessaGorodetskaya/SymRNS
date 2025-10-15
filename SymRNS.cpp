@@ -97,33 +97,36 @@ Positional_Int SymRnsNumber::to_positional_ort() const {
         sm += a[i] * base.get().B[i];
     }
     Positional_Int A = mod_sym(sm, base.get().P);
-    Module rank = static_cast<Module>((sm - A) / base.get().P);
-    std::cout << std::endl << "ORT: " << sm << " mod_sym " << base.get().P << " = " << A << ", ранг=" << rank <<std::endl;
+    // Module rank = static_cast<Module>((sm - A) / base.get().P);
+    // std::cout << std::endl << "ORT: " << sm << " mod_sym " << base.get().P << " = " << A << ", ранг=" << rank <<std::endl;
     return A;  // по симметричному модулю динамического диапазона
 }
 
 Positional_Int SymRnsNumber::to_positional_mrc() const {
     Modules x(a.size());
     x[0] = a[0];
-    std::cout << "MRC: (x1 = " << x[0] << ") +" << std::endl;    
+    // std::cout << "MRC: (x1 = " << x[0] << ") +" << std::endl;    
     Positional_Int Ai = x[0], Pi_1 = 1, xi;
     for (size_t i = 1; i < a.size(); ++i) {
         xi = a[i];
-        std::cout << "MRC: (x" << i+1 << " = (";
-        for (size_t j = 0; j < i; ++j) std::cout << '(';
-        std::cout << xi;
+        // std::cout << "MRC: (x" << i+1 << " = (";
+        // for (size_t j = 0; j < i; ++j) std::cout << '(';
+        // std::cout << xi;
         for (size_t j = 0; j < i; ++j) {
-            std::cout << " - " << x[j] << ") * " << base.get().t[j][i];            
+            // std::cout << " - " << x[j] << ") * " << base.get().t[j][i];            
             xi = (xi - x[j]) * base.get().t[j][i];
         }
         Pi_1 *= base.get().p[i-1];
-        std::cout << " = " << xi << ") mod_sym " << base.get().p[i];
+        // std::cout << " = " << xi << ") mod_sym " << base.get().p[i];
         x[i] = mod_sym(xi, base.get().p[i]);
-        std::cout << " = " << x[i] << ") * " << Pi_1;
-        if (i + 1 != a.size()) std::cout << " +" << std::endl;
+        // std::cout << " = " << x[i] << ") * " << Pi_1;
+        // if (i + 1 != a.size()) std::cout << " +" << std::endl;
         Ai += Pi_1 * x[i];
     }
-    std::cout << " = " << Ai << std::endl;
+    // std::cout << " = " << Ai << std::endl;
+    std::cout << Ai << ';';
+    for (size_t i = 0; i < a.size(); ++i) std::cout << x[i] << ';';
+    std::cout << std::endl;
     return Ai;
 }
 
@@ -390,7 +393,7 @@ int main() {
             std::cout << "ОШИБКА: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
             ok = false;
         } else {
-            std::cout << "ИНФО: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
+            // std::cout << "ИНФО: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
         }
     }
 

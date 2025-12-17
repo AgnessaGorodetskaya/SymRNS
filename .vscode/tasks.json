@@ -40,6 +40,8 @@
                 "-Wpedantic",
                 "-g",
                 "${file}",
+                "SymRNS.cpp",
+                "SymRNSFrac.cpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],

@@ -27,11 +27,9 @@ class RnsNumber {
    public:
     std::reference_wrapper<const RnsBase> base;  // ссылка на класс оснований
     Modules a;                                   // вектор значений модулей (a1, a2 .. an)
-    Positional_Int q_int;  // делитель представления с фиксированной точкой
 
-    RnsNumber(Positional_Int x, const RnsBase& base0, Positional_Int q0 = 1);  // из целого позиционного
-    RnsNumber(Positional_Float x, const RnsBase& base0, Positional_Int q0);    // из вещест. позиционного
-    RnsNumber(const Modules& a0, const RnsBase& base0, Positional_Int q0 = 1); // из вектора остатков
+    RnsNumber(Positional_Int x, const RnsBase& base0);  // из целого позиционного
+    RnsNumber(const Modules& a0, const RnsBase& base0); // из вектора остатков
     template<typename ModType> static ModType mod(Positional_Int x, ModType p); // математический модуль числа
     template<typename ModType> static ModType mod_inverse(Positional_Int a, ModType p); // обратное по модулю число a^-1 mod p
     RnsNumber& operator+=(const RnsNumber& y);  // this += y
@@ -44,12 +42,10 @@ class RnsNumber {
     bool operator==(const RnsNumber& y) const;  // (this == y)
     bool operator!=(const RnsNumber& y) const;  // (this != y)
     friend std::ostream& operator<<(std::ostream& os, const RnsNumber& y);  // для вывода на cout
-    Positional_Float to_positional(Positional_Int* x_int = NULL) const;  // в позиционное представление
     Positional_Int to_positional_ort() const;  // в позиционное представление
     Positional_Int to_positional_mrc() const;  // в позиционное представление
     Positional_Int get_rank() const; // получение ранга числа
-    Positional_Int get_rank_x(Positional_Int x) const; // получение ранга числа * x
-    RnsNumber round(Positional_Int b) const;  // округление к ближайшему кратному x
+    // RnsNumber round(Positional_Int b) const;  // округление к ближайшему кратному x
 };
 
 RnsBase::RnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()), t(p.size(), Modules(p.size())) {
@@ -68,7 +64,7 @@ RnsBase::RnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()), t(p.size(
         Positional_Int Pi = P / p[i];
         m[i] = RnsNumber::mod_inverse(Pi, p[i]);  // вес i-го ортогонального базиса
         B[i] = m[i] * Pi;  // i-й ортогональный базис
-        RnsNumber B_rns{B[i], *this, 1};
+        RnsNumber B_rns{B[i], *this};
         std::cout << "ORT: Ортогональный базис B" << i+1 << '=' << B[i] << ' ' << B_rns << ", вес базиса m" << i+1 << "=" << m[i] << std::endl;
     }
 
@@ -91,7 +87,7 @@ Positional_Int RnsNumber::to_positional_ort() const {
 Positional_Int RnsNumber::to_positional_mrc() const {
     Modules x(a.size());
     x[0] = a[0];
-    // std::cout << "MRC: (x1 = " << x[0] << ") +" << std::endl;    
+    // std::cout << "MRC: (x1 = " << x[0] << ") +" << std::endl;
     Positional_Int Ai = x[0], Pi_1 = 1, xi;
     for (size_t i = 1; i < a.size(); ++i) {
         xi = a[i];
@@ -99,7 +95,7 @@ Positional_Int RnsNumber::to_positional_mrc() const {
         // for (size_t j = 0; j < i; ++j) std::cout << '(';
         // std::cout << xi;
         for (size_t j = 0; j < i; ++j) {
-            // std::cout << " - " << x[j] << ") * " << base.get().t[j][i];            
+            // std::cout << " - " << x[j] << ") * " << base.get().t[j][i];
             xi = (xi - x[j]) * base.get().t[j][i];
         }
         Pi_1 *= base.get().p[i-1];
@@ -116,25 +112,16 @@ Positional_Int RnsNumber::to_positional_mrc() const {
     return Ai;
 }
 
-Positional_Float RnsNumber::to_positional(Positional_Int* x_int) const {
-    Positional_Int res_int = to_positional_ort();
-    if (x_int) *x_int = res_int;  // опционально целочисленный числитель возвращаем по указателю в параметре
-    return static_cast<Positional_Float>(res_int) / q_int;
-}
-
-RnsNumber::RnsNumber(Positional_Int x, const RnsBase& base0, Positional_Int q0)
-    : base{base0}, a(base.get().p.size()), q_int(q0) {
+RnsNumber::RnsNumber(Positional_Int x, const RnsBase& base0)
+    : base{base0}, a(base.get().p.size()) {
     size_t i = 0;
     for (Module pi : base.get().p) {
         a[i++] = mod(x, pi);
     }
 }
 
-RnsNumber::RnsNumber(Positional_Float x, const RnsBase& base0, Positional_Int q0)
-    : RnsNumber(static_cast<Positional_Int>(std::round(x * q0)), base0, q0) {}
-
-RnsNumber::RnsNumber(const Modules& a0, const RnsBase& base0, Positional_Int q0)
-    : base{base0}, a{a0}, q_int(q0) {}
+RnsNumber::RnsNumber(const Modules& a0, const RnsBase& base0)
+    : base{base0}, a{a0} {}
 
 template<typename ModType> ModType RnsNumber::mod(Positional_Int x, ModType p) {
     ModType r = x % p;
@@ -160,19 +147,8 @@ template<typename ModType> ModType RnsNumber::mod_inverse(Positional_Int x, ModT
 }
 
 RnsNumber& RnsNumber::operator+=(const RnsNumber& y) {
-    Positional_Int xm, ym;
-    if (q_int == y.q_int) {  // сложение с одинаковыми делителями (знаменателями)
-        xm = 1;
-        ym = 1;
-    } else {
-        Positional_Int lcm = std::lcm(q_int, y.q_int);  // делитель суммы = НОК делителей слагаемых
-                                                        // 5/6 + 8/9 = (5*3 + 8*2) / НОК(6,9)=18
-        xm = lcm / q_int;
-        ym = lcm / y.q_int;
-        q_int = lcm;
-    }
     for (size_t i = 0; i < a.size(); ++i) {
-        a[i] = mod(xm * a[i] + ym * y.a[i], base.get().p[i]);
+        a[i] = mod(a[i] + y.a[i], base.get().p[i]);
     }
     return *this;
 }
@@ -184,20 +160,8 @@ RnsNumber RnsNumber::operator+(const RnsNumber& y) const {
 }
 
 RnsNumber& RnsNumber::operator-=(const RnsNumber& y) {
-    Positional_Int xm, ym;
-    if (q_int == y.q_int) {  // вычитание с одинаковыми делителями (знаменателями)
-        xm = 1;
-        ym = 1;
-    } else {
-        Positional_Int lcm =
-            std::lcm(q_int, y.q_int);  // делитель разности = НОК делителей слагаемых
-                                       // 5/6 - 8/9 = (5*3 - 8*2) / НОК(6,9)=18
-        xm = lcm / q_int;
-        ym = lcm / y.q_int;
-        q_int = lcm;
-    }
     for (size_t i = 0; i < a.size(); ++i) {
-        a[i] = mod(xm * a[i] - ym * y.a[i], base.get().p[i]);
+        a[i] = mod(a[i] - y.a[i], base.get().p[i]);
     }
     return *this;
 }
@@ -220,7 +184,6 @@ RnsNumber& RnsNumber::operator*=(const RnsNumber& y) {
     for (size_t i = 0; i < a.size(); ++i) {
         a[i] = mod(a[i] * y.a[i], base.get().p[i]);
     }
-    q_int *= y.q_int;  // при умножении fixed-делители умножаются 2/3 * 4/5 = (2*4)/(3*5)
     return *this;
 }
 
@@ -231,7 +194,7 @@ RnsNumber RnsNumber::operator*(const RnsNumber& y) const {
 }
 
 bool RnsNumber::operator==(const RnsNumber& y) const {
-    if (a.size() != y.a.size() || q_int != y.q_int) return false;
+    if (a.size() != y.a.size()) return false;
     for (size_t i = 0; i < a.size(); ++i) {
         if (a[i] != y.a[i]) return false;
     }
@@ -247,7 +210,6 @@ std::ostream& operator<<(std::ostream& os, const RnsNumber& y) {
         if (i) os << ";";
         os << y.a[i];
     }
-    if (y.q_int != 1) os << ";q=" << y.q_int;
     os << ')';
     return os;
 }
@@ -260,43 +222,6 @@ Positional_Int RnsNumber::get_rank() const {
     Positional_Int rank = pos_int / base.get().P;
     std::cout << "rank of "<< pos_int << "=" << rank << std::endl;
     return rank;
-}
-
-Positional_Int RnsNumber::get_rank_x(Positional_Int x) const { // вычисление ранга числа * x
-    Positional_Int r_a = get_rank(); // ранг текущего числа
-    Positional_Int r_xa = r_a * x;
-    std::cout << "r_xa = " << r_a << "*" << x;
-    for (size_t i = 0; i < a.size(); ++i) {
-        Module pi = base.get().p[i];
-        Module ai = a[i];
-        Positional_Int t = (ai * x / base.get().p[i]) * base.get().m[i];
-        r_xa -= t;
-        std::cout << "- (" << ai << "*" << x << "/" << pi <<") * " << base.get().m[i];
-    }
-    std::cout << " = " << r_xa << std::endl;
-    return r_xa;
-}
-
-RnsNumber RnsNumber::round(Positional_Int b) const {
-    RnsNumber aq{*this}; // копия текущего числа
-    for (size_t i = 0; i < a.size(); ++i) {
-        Module pi = base.get().p[i];
-        // поразрядно делим копию числа на x
-        Positional_Int bq = mod_inverse(b, pi);
-        aq.a[i] = mod(aq.a[i] * bq, pi);
-        std::cout << "aq.a[i]=" << aq.a[i] << "*" << "10^-1 mod " <<  pi << "=" << bq << std::endl;
-    }
-    std::cout << "aq=" << aq.to_positional() << ' ' << aq << " rank=" << aq.get_rank() << std::endl;
-    Positional_Int r_xa = aq.get_rank_x(b);  // ранг числа (aq * x)
-    // k - разница в рангах числа a и 10*(a/10)
-    Positional_Int k = get_rank() - r_xa;
-    RnsNumber res{*this};
-    if (k) { // если есть разница в рангах
-        // t - последняя цифра делимого, округляющее число
-        Positional_Int t = b - (k * base.get().P) % b;
-        res -= RnsNumber{t, base}; // отнимаем округляющее число
-    }
-    return res;
 }
 
 int main() {

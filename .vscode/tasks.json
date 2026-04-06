@@ -6,7 +6,7 @@
             "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
-                "-std=c++17",
+                "-std=c++23",
                 "-O0",
                 "-Wall",
                 "-Werror",
@@ -40,8 +40,6 @@
                 "-Wpedantic",
                 "-g",
                 "${file}",
-                "SymRNS.cpp",
-                "SymRNSFrac.cpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],

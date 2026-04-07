@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <iomanip>
+#include <algorithm>
 #include "SymRNSFixed.cpp"
 
 int main(void) {
@@ -8,6 +9,8 @@ int main(void) {
     SymRnsBase base{{3, 7, 11, 13}, S};
     // RnsBase base{{3, 5, 7}, S};
     // SymRnsBase base{{3, 7, 11, 13, 17}, S};
+
+    Positional_Float prec = 0.5 / S;
 
     // for (int x= -10; x <= 10; ++x) {
     //     std::cout << "x=" << x << " x^-1=" << RnsNumber::mod_inverse(x, 5) << std::endl;
@@ -19,17 +22,18 @@ int main(void) {
     // целочисленные проверки конвертации в позиционную ИС
    for (Positional_Int x_pos = -base.P / 2; x_pos <= base.P / 2; ++x_pos) {
         SymRnsFixed x_rns{x_pos, base};
-        Positional_Float x_pos_ort = x_rns.to_positional_ort();
+        Positional_Float x_pos_float = static_cast<Positional_Float>(x_pos) / S;
+        Positional_Float x_pos_crt = x_rns.to_positional_crt();
         Positional_Float x_pos_mrc = x_rns.to_positional_mrc();
-        Positional_Float x_pos_frac = x_rns.to_positional_frac_ort();
-        if (x_pos != static_cast<Positional_Int>(std::round(x_pos_ort * S)) ||
-            x_pos != static_cast<Positional_Int>(std::round(x_pos_mrc * S)) ||
-            x_pos != static_cast<Positional_Int>(std::round(x_pos_frac * S))
-        ) {
-            std::cout << "ОШИБКА: x=" << x_pos << " СОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << " MRC_F=" << x_pos_frac << std::endl;
+        Positional_Float x_pos_frac = x_rns.to_positional_frac_crt();
+        if ((std::abs(x_pos_crt - x_pos_float) > prec) ||
+            (std::abs(x_pos_crt - x_pos_mrc) > prec) ||
+            (std::abs(x_pos_crt - x_pos_frac) > prec))
+        {
+            std::cout << "ОШИБКА: x=" << x_pos << " СОК=" << x_rns << " ORT=" << x_pos_crt << " MRC=" << x_pos_mrc << " MRC_F=" << x_pos_frac << std::endl;
             ok = false;
         } else {
-            std::cout << "ИНФО: x=" << x_pos << " СОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << " MRC_F=" << x_pos_frac << std::endl;
+            std::cout << "ИНФО: x=" << x_pos << " СОК=" << x_rns << " ORT=" << x_pos_crt << " MRC=" << x_pos_mrc << " MRC_F=" << x_pos_frac << std::endl;
         }
     }
 
@@ -105,13 +109,12 @@ int main(void) {
     SymRnsFixed a{a_int, base};
     SymRnsFixed b{b_int, base};
     SymRnsFixed c = a * b;
-    Positional_Float c_fl = c.to_positional_frac_ort();
+    Positional_Float c_fl = c.to_positional_frac_crt();
 
     Positional_Float a_fl = static_cast<Positional_Float>(a_int) / S; // 90/S
     Positional_Float b_fl = static_cast<Positional_Float>(b_int) / S; // 100/S
     Positional_Float cc_fl = a_fl * b_fl;
     Positional_Float eps = std::abs(c_fl - cc_fl);
-    Positional_Float prec = 1.0/S/2;
 
     if (eps > prec) {
         ok = false;
@@ -122,6 +125,18 @@ int main(void) {
     std::cout << c_fl << " ? " << cc_fl << " eps=" << eps <<
             " prec=" << prec << std::endl;
 
-    std::cout << a.to_positional_ort() << '*' << b.to_positional_ort() << '=' << c.to_positional_ort() << ' ' << c << std::endl;
+    std::cout << a.to_positional_crt() << '*' << b.to_positional_crt() << '=' << c.to_positional_crt() << ' ' << c << std::endl;
+
+    // сортировка
+    constexpr size_t VSIZE = 10;
+    std::vector<SymRnsFixed> v(VSIZE, SymRnsFixed{0, base});
+    for (size_t i = 0; i < VSIZE; ++i) {
+        v[i] = SymRnsFixed(std::rand() % base.P - base.P / 2, base);
+    }
+    std::sort(v.begin(), v.end());
+    for (const auto& x_rns : v) {
+        std::cout << x_rns << ' ' << x_rns.to_positional_frac_crt() << std::endl;
+    }
+
     if (ok) std::cout << "ТЕСТЫ ПРОйДЕНЫ!!!" << std::endl << std::endl;
 }

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <iomanip>
-#include "SymRNSFrac.hpp"
+#include "SymRNSFrac.cpp"
 
 int main() {
     SymRnsBase base{{3, 7, 11}};
@@ -14,33 +14,33 @@ int main() {
     SymRnsFrac b{{-8, base}, {9, base}};
     SymRnsFrac c{{-8, base}, {6, base}};
 
-    std::cout << "a=" << a << '=' << a.numerator.to_positional_ort() << '/' << a.denominator.to_positional_ort() << std::endl;
-    std::cout << "b=" << b << '=' << b.numerator.to_positional_ort() << '/' << b.denominator.to_positional_ort() << std::endl;
-    std::cout << "c=" << c << '=' << c.numerator.to_positional_ort() << '/' << c.denominator.to_positional_ort() << std::endl;
+    std::cout << "a=" << a << '=' << a.numerator.to_positional_crt() << '/' << a.denominator.to_positional_crt() << std::endl;
+    std::cout << "b=" << b << '=' << b.numerator.to_positional_crt() << '/' << b.denominator.to_positional_crt() << std::endl;
+    std::cout << "c=" << c << '=' << c.numerator.to_positional_crt() << '/' << c.denominator.to_positional_crt() << std::endl;
 
     SymRnsFrac z = a * b;
-    std::cout << "a*b=" << z << '=' << z.numerator.to_positional_ort() << '/' << z.denominator.to_positional_ort() << std::endl;
+    std::cout << "a*b=" << z << '=' << z.numerator.to_positional_crt() << '/' << z.denominator.to_positional_crt() << std::endl;
 
     z = a + b;
-    std::cout << "a+b=" << z << '=' << z.numerator.to_positional_ort() << '/' << z.denominator.to_positional_ort() << std::endl;
+    std::cout << "a+b=" << z << '=' << z.numerator.to_positional_crt() << '/' << z.denominator.to_positional_crt() << std::endl;
 
     z = a - b;
-    std::cout << "a-b=" << z << '=' << z.numerator.to_positional_ort() << '/' << z.denominator.to_positional_ort() << std::endl;
+    std::cout << "a-b=" << z << '=' << z.numerator.to_positional_crt() << '/' << z.denominator.to_positional_crt() << std::endl;
 
     z = a / b;
-    std::cout << "a/b=" << z << '=' << z.numerator.to_positional_ort() << '/' << z.denominator.to_positional_ort() << std::endl;
+    std::cout << "a/b=" << z << '=' << z.numerator.to_positional_crt() << '/' << z.denominator.to_positional_crt() << std::endl;
 
     z = a * c;
-    std::cout << "a*c=" << z << '=' << z.numerator.to_positional_ort() << '/' << z.denominator.to_positional_ort() << std::endl;
+    std::cout << "a*c=" << z << '=' << z.numerator.to_positional_crt() << '/' << z.denominator.to_positional_crt() << std::endl;
 
     z = a + c;
-    std::cout << "a+c=" << z << '=' << z.numerator.to_positional_ort() << '/' << z.denominator.to_positional_ort() << std::endl;
+    std::cout << "a+c=" << z << '=' << z.numerator.to_positional_crt() << '/' << z.denominator.to_positional_crt() << std::endl;
 
     z = a - c;
-    std::cout << "a-c=" << z << '=' << z.numerator.to_positional_ort() << '/' << z.denominator.to_positional_ort() << std::endl;
+    std::cout << "a-c=" << z << '=' << z.numerator.to_positional_crt() << '/' << z.denominator.to_positional_crt() << std::endl;
 
     z = a / c;
-    std::cout << "a/c=" << z << '=' << z.numerator.to_positional_ort() << '/' << z.denominator.to_positional_ort() << std::endl;
+    std::cout << "a/c=" << z << '=' << z.numerator.to_positional_crt() << '/' << z.denominator.to_positional_crt() << std::endl;
 
 
     // Positional_Int a_int, b_int, c_int;
@@ -62,13 +62,13 @@ int main() {
     //         // проверки сложения
     //         Positional_Int res_int = x_int + y_int;
     //         if (res_int >= -base.P/2 && res_int <= base.P/2) {
-    //             SymRnsNumber r_rns = SymRnsNumber(x_int, base) + SymRnsNumber(y_int, base); 
+    //             SymRnsNumber r_rns = SymRnsNumber(x_int, base) + SymRnsNumber(y_int, base);
     //             SymRnsNumber res_rns = SymRnsNumber(res_int, base);
     //             if (res_rns != r_rns) {
     //                 std::cout << "ОШИБКА: " << x_int << " + "
     //                           << y_int << " convert: " <<
-    //                           res_rns.to_positional_ort()
-    //                           << " calc: " << r_rns.to_positional_ort() << std::endl;
+    //                           res_rns.to_positional_crt()
+    //                           << " calc: " << r_rns.to_positional_crt() << std::endl;
     //                 ok = false;
     //             }
     //         }
@@ -81,8 +81,8 @@ int main() {
     //             if (res_rns != r_rns) {
     //                 std::cout << "ОШИБКА: x: " << x_int << " * y:"
     //                     << y_int << " convert: " <<
-    //                     res_rns.to_positional_ort()
-    //                     << " calc: " << r_rns.to_positional_ort() << std::endl;
+    //                     res_rns.to_positional_crt()
+    //                     << " calc: " << r_rns.to_positional_crt() << std::endl;
     //                 ok = false;
     //             }
     //         }

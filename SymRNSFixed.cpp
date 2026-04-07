@@ -35,7 +35,7 @@ SymRnsBase::SymRnsBase(const Modules& p0, Positional_Int S0) :
     }
 }
 
-Positional_Float SymRnsFixed::to_positional_ort() const {
+Positional_Float SymRnsFixed::to_positional_crt() const {
     Positional_Int sm = 0;
     for (size_t i = 0; i < a.size(); ++i) {
         sm += a[i] * base.get().B[i];
@@ -46,31 +46,39 @@ Positional_Float SymRnsFixed::to_positional_ort() const {
     return (static_cast<Positional_Float>(A) / base.get().S);  // по симметричному модулю динамического диапазона
 }
 
-Positional_Float SymRnsFixed::to_positional_frac_ort() const {
+Positional_Float SymRnsFixed::frac_crt_sum() const {
     Positional_Float pos_float = 0;
     for (size_t i = 0; i < a.size(); ++i) {
         pos_float += static_cast<Positional_Float>(SymRnsFixed::mod_sym(a[i] * base.get().m[i], base.get().p[i])) / base.get().p[i];
         // pos_float += static_cast<Positional_Float>(a[i] * base.get().m[i]) / base.get().p[i];
     }
-    // std::cout << pos_float;
-    Positional_Float int_part;
+    return pos_float;
+}
+
+Positional_Int SymRnsFixed::to_positional_frac_crt_unscaled() const {
+    Positional_Float pos_float = frac_crt_sum(), int_part;
+    pos_float = std::modf(pos_float, &int_part);
+    if (pos_float > 0.5) { pos_float -= 1.0; }
+    else if (pos_float < -0.5) { pos_float += 1.0; }
+    pos_float *= base.get().P;
+    Positional_Int pos_int = static_cast<Positional_Int>(std::round(pos_float));
+    return pos_int;
+}
+
+Positional_Float SymRnsFixed::to_positional_frac_crt() const {
+    Positional_Float pos_float = frac_crt_sum(), int_part;
     pos_float = std::modf(pos_float, &int_part);
     if (pos_float > 0.5) { pos_float -= 1.0; }
     else if (pos_float < -0.5) { pos_float += 1.0; }
     // std::cout << pos_float << std::endl;
     pos_float *= base.get().P;
-    // std::cout << ' ' << pos_float << std::endl;
-    return (pos_float / base.get().S);
+    pos_float /= base.get().S;
+    return pos_float;
 }
 
 Positional_Int SymRnsFixed::get_rank() const {
-    Positional_Float pos_float = 0;
-    for (size_t i = 0; i < a.size(); ++i) {
-        pos_float += static_cast<Positional_Float>(SymRnsFixed::mod_sym(a[i] * base.get().m[i], base.get().p[i])) / base.get().p[i];
-        //pos_frac += static_cast<Positional_Float>(a[i] * base.get().m[i]) / base.get().p[i];
-    }
+    Positional_Float pos_float = frac_crt_sum(), int_part;
     std::cout << " get_rank(): " << pos_float;
-    Positional_Float int_part;
     pos_float = std::modf(pos_float, &int_part);
     Positional_Int rank = static_cast<Positional_Int>(int_part);
     if (pos_float > 0.5) { pos_float -= 1.0; ++rank; }
@@ -125,9 +133,6 @@ SymRnsFixed::SymRnsFixed(Positional_Int x, const SymRnsBase& base0)
         a[i++] = mod_sym(x, pi);
     }
 }
-
-SymRnsFixed::SymRnsFixed(Positional_Float x, const SymRnsBase& base0)
-    : SymRnsFixed(static_cast<Positional_Int>(std::round(x * base0.S)), base0) {}
 
 template<typename ModType> ModType SymRnsFixed::mod(Positional_Int x, ModType p) {
     ModType r = x % p;
@@ -210,7 +215,7 @@ SymRnsFixed& SymRnsFixed::operator*=(const SymRnsFixed& y) {
         a[i] = mod_sym(a[i] * y.a[i], base.get().p[i]);
     }
 
-    std::cout << "RAW=" << to_positional_ort();
+    std::cout << "RAW=" << to_positional_crt();
     // масштабирование на S
     Positional_Int remainder = get_remainder(base.get().S);
     std::cout << " REM=" << remainder;
@@ -218,7 +223,7 @@ SymRnsFixed& SymRnsFixed::operator*=(const SymRnsFixed& y) {
     SymRnsFixed remainder_rns{remainder, base};
     *this -= remainder_rns;
 
-    std::cout << " WO_REM=" << to_positional_ort() << ' ' << *this;
+    std::cout << " WO_REM=" << to_positional_crt() << ' ' << *this;
 
     SymRnsFixed S_rns{base.get().S, base};
     std::cout << " S=" << S_rns;
@@ -245,6 +250,23 @@ bool SymRnsFixed::operator==(const SymRnsFixed& y) const {
 
 bool SymRnsFixed::operator!=(const SymRnsFixed& y) const { return (!(*this == y)); }
 
+bool SymRnsFixed::operator<(const SymRnsFixed &y) const
+{
+    if (*this == y) return false;  // быстро
+
+    Positional_Float x_fl = frac_crt_sum(), y_fl = y.frac_crt_sum(), int_part;
+
+    x_fl = std::modf(x_fl, &int_part);
+    if (x_fl > 0.5) { x_fl -= 1.0; }
+    else if (x_fl < -0.5) { x_fl += 1.0; }
+
+    y_fl = std::modf(y_fl, &int_part);
+    if (y_fl > 0.5) { y_fl -= 1.0; }
+    else if (y_fl < -0.5) { y_fl += 1.0; }
+
+    return (x_fl < y_fl);
+}
+
 std::ostream& operator<<(std::ostream& os, const SymRnsFixed& y) {
     size_t sz = y.a.size();
     os << '(';
@@ -255,14 +277,3 @@ std::ostream& operator<<(std::ostream& os, const SymRnsFixed& y) {
     os << ')';
     return os;
 }
-
-// void SymRnsFixed::print_dec() const {
-//     Positional_Int value = to_positional_ort();
-//     if (value < 0)
-//     {
-//         std::print("-");
-//         value = -value;
-//     }
-//     auto [int_part, frac_part] = std::div(value, SCALE);
-//     std::print("{}.{:0{}d}\n", int_part, frac_part, PRECISION);
-// }

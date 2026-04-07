@@ -31,7 +31,6 @@ class SymRnsFixed {
     Modules a;                                      // вектор значений модулей (a1, a2 .. an)
 
     SymRnsFixed(Positional_Int x, const SymRnsBase& base0);  // из целого позиционного
-    SymRnsFixed(Positional_Float x, const SymRnsBase& base0);    // из вещест. позиционного
     SymRnsFixed(const Modules& a0, const SymRnsBase& base0) : base{base0}, a{a0} {}; // из вектора остатков
     template<typename ModType> static ModType mod(Positional_Int x, ModType p); // математический модуль числа
     template<typename ModType> static ModType mod_sym(Positional_Int x, ModType p);  // симметричный модуль
@@ -53,11 +52,14 @@ class SymRnsFixed {
     SymRnsFixed operator*(const SymRnsFixed& y) const;  // z = this * y
     bool operator==(const SymRnsFixed& y) const;  // (this == y)
     bool operator!=(const SymRnsFixed& y) const;  // (this != y)
+    bool operator<(const SymRnsFixed& y) const; // сравнение
     void div_int(const SymRnsFixed& y);  // деление нацело (когда точно делится)
     friend std::ostream& operator<<(std::ostream& os, const SymRnsFixed& y);  // для вывода на cout
-    Positional_Float to_positional_ort() const;  // в позиционное (int) представление по ORT
-    Positional_Float to_positional_frac_ort() const;  // в позиционное представление
+    Positional_Float to_positional_crt() const;  // в позиционное (int) представление по ORT
+    Positional_Float to_positional_frac_crt() const;  // в позиционное представление
+    Positional_Int to_positional_frac_crt_unscaled() const;  // в позиционное представление (немасштабированное целое)
     Positional_Float to_positional_mrc() const;  // в позиционное представление по MRC
+    Positional_Float frac_crt_sum() const; // дробная сумма дробной CRT
     Positional_Int get_rank() const; // получение ранга числа
     Positional_Int get_remainder(Positional_Int divisor) const; // остаток от деления
 };

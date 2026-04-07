@@ -54,7 +54,7 @@ class SymRnsNumber {
     bool operator==(const SymRnsNumber& y) const;  // (this == y)
     bool operator!=(const SymRnsNumber& y) const;  // (this != y)
     friend std::ostream& operator<<(std::ostream& os, const SymRnsNumber& y);  // для вывода на cout
-    Positional_Int to_positional_ort() const;  // в позиционное (int) представление
+    Positional_Int to_positional_crt() const;  // в позиционное (int) представление
     Positional_Int to_positional_mrc() const;  // в позиционное представление MRC
     Positional_Int to_positional_int0() const;  // в позиционное из СОК (int) представление
     Positional_Float to_positional(Positional_Int* x_int = NULL) const;  // в позиционное представление
@@ -91,7 +91,7 @@ SymRnsBase::SymRnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()), t(p
     }
 }
 
-Positional_Int SymRnsNumber::to_positional_ort() const {
+Positional_Int SymRnsNumber::to_positional_crt() const {
     Positional_Int sm = 0;
     for (size_t i = 0; i < a.size(); ++i) {
         sm += a[i] * base.get().B[i];
@@ -105,7 +105,7 @@ Positional_Int SymRnsNumber::to_positional_ort() const {
 Positional_Int SymRnsNumber::to_positional_mrc() const {
     Modules x(a.size());
     x[0] = a[0];
-    // std::cout << "MRC: (x1 = " << x[0] << ") +" << std::endl;    
+    // std::cout << "MRC: (x1 = " << x[0] << ") +" << std::endl;
     Positional_Int Ai = x[0], Pi_1 = 1, xi;
     for (size_t i = 1; i < a.size(); ++i) {
         xi = a[i];
@@ -113,7 +113,7 @@ Positional_Int SymRnsNumber::to_positional_mrc() const {
         // for (size_t j = 0; j < i; ++j) std::cout << '(';
         // std::cout << xi;
         for (size_t j = 0; j < i; ++j) {
-            // std::cout << " - " << x[j] << ") * " << base.get().t[j][i];            
+            // std::cout << " - " << x[j] << ") * " << base.get().t[j][i];
             xi = (xi - x[j]) * base.get().t[j][i];
         }
         Pi_1 *= base.get().p[i-1];
@@ -140,7 +140,7 @@ Positional_Int SymRnsNumber::to_positional_int0() const {  // восприним
 }
 
 Positional_Float SymRnsNumber::to_positional(Positional_Int* x_int) const {
-    Positional_Int res_int = to_positional_ort();
+    Positional_Int res_int = to_positional_crt();
     if (x_int) *x_int = res_int;  // опционально целочисленный числитель возвращаем по указателю в параметре
     return static_cast<Positional_Float>(res_int) / q_int;
 }
@@ -290,7 +290,7 @@ Positional_Int SymRnsNumber::get_rank(bool* sign) const {
     for (size_t i = 0; i < a.size(); ++i) {
         Positional_Int Bi = base.get().B[i];
         Module ai = a[i];
-        Bi = modsym_to_mod(Bi, base.get().P); // выведем B[i] из симм.диапазона        
+        Bi = modsym_to_mod(Bi, base.get().P); // выведем B[i] из симм.диапазона
         ai = modsym_to_mod(ai, base.get().p[i]);  // выведем из симм
         pos_int += ai * Bi;
     }
@@ -342,7 +342,7 @@ SymRnsNumber SymRnsNumber::round(Positional_Int b) const {
     Positional_Int r_xa = aq.get_rank_x(b);  // ранг числа (aq * x)
     // k - разница в рангах числа a и 10*(a/10)
     Positional_Int k = ra - r_xa;
-    std::cout << "k=" << k << " ra=" << ra << " r_xa=" << r_xa << std::endl; 
+    std::cout << "k=" << k << " ra=" << ra << " r_xa=" << r_xa << std::endl;
     SymRnsNumber res{*this};
     if (k) { // если есть разница в рангах
         // t - последняя цифра делимого, округляющее число
@@ -387,13 +387,13 @@ int main() {
     // целочисленные проверки конвертации в позиционную ИС
     for (Positional_Int x_pos = -base.P / 2; x_pos <= base.P / 2; ++x_pos) {
         SymRnsNumber x_rns = SymRnsNumber{x_pos, base};
-        Positional_Int x_pos_ort = x_rns.to_positional_ort();
+        Positional_Int x_pos_crt = x_rns.to_positional_crt();
         Positional_Int x_pos_mrc = x_rns.to_positional_mrc();
-        if (x_pos != x_pos_ort || x_pos != x_pos_mrc) {
-            std::cout << "ОШИБКА: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
+        if (x_pos != x_pos_crt || x_pos != x_pos_mrc) {
+            std::cout << "ОШИБКА: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_crt << " MRC=" << x_pos_mrc << std::endl;
             ok = false;
         } else {
-            // std::cout << "ИНФО: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
+            // std::cout << "ИНФО: x=" << x_pos << " ССОК=" << x_rns << " ORT=" << x_pos_crt << " MRC=" << x_pos_mrc << std::endl;
         }
     }
 

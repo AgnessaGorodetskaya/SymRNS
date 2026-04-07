@@ -42,7 +42,7 @@ class RnsNumber {
     bool operator==(const RnsNumber& y) const;  // (this == y)
     bool operator!=(const RnsNumber& y) const;  // (this != y)
     friend std::ostream& operator<<(std::ostream& os, const RnsNumber& y);  // для вывода на cout
-    Positional_Int to_positional_ort() const;  // в позиционное представление
+    Positional_Int to_positional_crt() const;  // в позиционное представление
     Positional_Int to_positional_mrc() const;  // в позиционное представление
     Positional_Int get_rank() const; // получение ранга числа
     // RnsNumber round(Positional_Int b) const;  // округление к ближайшему кратному x
@@ -76,7 +76,7 @@ RnsBase::RnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()), t(p.size(
     }
 }
 
-Positional_Int RnsNumber::to_positional_ort() const {
+Positional_Int RnsNumber::to_positional_crt() const {
     Positional_Int res_int = 0;
     for (size_t i = 0; i < a.size(); ++i) {
         res_int += a[i] * base.get().B[i];
@@ -264,13 +264,13 @@ int main() {
     // целочисленные проверки конвертации в позиционную ИС
     for (Positional_Int x_pos = 0; x_pos < base.P; ++x_pos) {
         RnsNumber x_rns = RnsNumber{x_pos, base};
-        Positional_Int x_pos_ort = x_rns.to_positional_ort();
+        Positional_Int x_pos_crt = x_rns.to_positional_crt();
         Positional_Int x_pos_mrc = x_rns.to_positional_mrc();
-        if (x_pos != x_pos_ort || x_pos != x_pos_mrc) {
-            std::cout << "ОШИБКА: x=" << x_pos << " СОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
+        if (x_pos != x_pos_crt || x_pos != x_pos_mrc) {
+            std::cout << "ОШИБКА: x=" << x_pos << " СОК=" << x_rns << " ORT=" << x_pos_crt << " MRC=" << x_pos_mrc << std::endl;
             ok = false;
         } else {
-            // std::cout << "ИНФО: x=" << x_pos << " СОК=" << x_rns << " ORT=" << x_pos_ort << " MRC=" << x_pos_mrc << std::endl;
+            // std::cout << "ИНФО: x=" << x_pos << " СОК=" << x_rns << " ORT=" << x_pos_crt << " MRC=" << x_pos_mrc << std::endl;
         }
     }
 

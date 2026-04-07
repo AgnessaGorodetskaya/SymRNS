@@ -50,6 +50,6 @@ class SymRnsNumber {
     bool operator==(const SymRnsNumber& y) const;  // (this == y)
     bool operator!=(const SymRnsNumber& y) const;  // (this != y)
     friend std::ostream& operator<<(std::ostream& os, const SymRnsNumber& y);  // для вывода на cout
-    Positional_Int to_positional_ort() const;  // в позиционное (int) представление по ORT
+    Positional_Int to_positional_crt() const;  // в позиционное (int) представление по ORT
     Positional_Int to_positional_mrc() const;  // в позиционное представление по MRC
 };

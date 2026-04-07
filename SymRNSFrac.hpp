@@ -1,5 +1,5 @@
 #include <iostream>
-#include "SymRNS.hpp"
+#include "SymRNS.cpp"
 
 class SymRnsFrac {
    public:

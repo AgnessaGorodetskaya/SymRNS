@@ -28,7 +28,7 @@ SymRnsBase::SymRnsBase(const Modules& p0) : p{p0}, B(p.size()), m(p.size()), t(p
     }
 }
 
-Positional_Int SymRnsNumber::to_positional_ort() const {
+Positional_Int SymRnsNumber::to_positional_crt() const {
     Positional_Int sm = 0;
     for (size_t i = 0; i < a.size(); ++i) {
         sm += a[i] * base.get().B[i];
@@ -42,7 +42,7 @@ Positional_Int SymRnsNumber::to_positional_ort() const {
 Positional_Int SymRnsNumber::to_positional_mrc() const {
     Modules x(a.size());
     x[0] = a[0];
-    // std::cout << "MRC: (x1 = " << x[0] << ") +" << std::endl;    
+    // std::cout << "MRC: (x1 = " << x[0] << ") +" << std::endl;
     Positional_Int Ai = x[0], Pi_1 = 1, xi;
     for (size_t i = 1; i < a.size(); ++i) {
         xi = a[i];
@@ -50,7 +50,7 @@ Positional_Int SymRnsNumber::to_positional_mrc() const {
         // for (size_t j = 0; j < i; ++j) std::cout << '(';
         // std::cout << xi;
         for (size_t j = 0; j < i; ++j) {
-            // std::cout << " - " << x[j] << ") * " << base.get().t[j][i];            
+            // std::cout << " - " << x[j] << ") * " << base.get().t[j][i];
             xi = (xi - x[j]) * base.get().t[j][i];
         }
         Pi_1 *= base.get().p[i-1];

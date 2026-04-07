@@ -112,7 +112,7 @@ Positional_Float RnsFixed::to_positional_crt() const {
 Positional_Float RnsFixed::frac_crt_sum() const {
     Positional_Float pos_float = 0;
     for (size_t i = 0; i < a.size(); ++i) {
-        pos_float += static_cast<Positional_Float>(RnsFixed::mod(a[i] * base.get().m[i], base.get().p[i])) / base.get().p[i];
+        pos_float += static_cast<Positional_Float>(mod(a[i] * base.get().m[i], base.get().p[i])) / base.get().p[i];
         // res += static_cast<Positional_Float>(a[i] * base.get().m[i]) / base.get().p[i];
     }
     return pos_float;
@@ -145,11 +145,11 @@ Positional_Int RnsFixed::get_rank() const {
 Positional_Int RnsFixed::get_remainder(Positional_Int divisor) const {
     Positional_Int rem_int = 0;
     for (size_t i = 0; i < a.size(); ++i) {
-        rem_int += RnsFixed::mod(base.get().Pi[i] * RnsFixed::mod(a[i] * base.get().m[i], base.get().p[i]), divisor);
+        rem_int += mod(base.get().Pi[i] * mod(a[i] * base.get().m[i], base.get().p[i]), divisor);
     }
     Positional_Int rank = get_rank();
-    rem_int -= RnsFixed::mod(rank * base.get().P, divisor);
-    rem_int = RnsFixed::mod(rem_int, divisor);
+    rem_int -= mod(rank * base.get().P, divisor);
+    rem_int = mod(rem_int, divisor);
     return rem_int;
 }
 

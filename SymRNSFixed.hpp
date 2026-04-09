@@ -50,6 +50,8 @@ class SymRnsFixed {
     SymRnsFixed operator-() const;  // Унарный минус z = -this
     SymRnsFixed& operator*=(const SymRnsFixed& y);  // this *= y
     SymRnsFixed operator*(const SymRnsFixed& y) const;  // z = this * y
+    SymRnsFixed& operator/=(const SymRnsFixed& y);  // this /= y
+    SymRnsFixed operator/(const SymRnsFixed& y) const;  // z = this / y
     bool operator==(const SymRnsFixed& y) const;  // (this == y)
     bool operator!=(const SymRnsFixed& y) const;  // (this != y)
     bool operator<(const SymRnsFixed& y) const; // сравнение

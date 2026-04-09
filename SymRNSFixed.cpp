@@ -88,6 +88,7 @@ Positional_Int SymRnsFixed::get_rank() const {
 }
 
 Positional_Int SymRnsFixed::get_remainder(Positional_Int divisor) const {
+    if (divisor < 0) divisor = -divisor;
     Positional_Int rem_int = 0;
     for (size_t i = 0; i < a.size(); ++i) {
         rem_int += mod_sym(base.get().Pi[i] * mod_sym(a[i] * base.get().m[i], base.get().p[i]), divisor);
@@ -152,7 +153,9 @@ template<typename ModType> ModType SymRnsFixed::mod_inverse_sym(Positional_Int x
     Positional_Int p1 = p, t, q;
     Positional_Int x0 = 0, x1 = 1;
     x = mod(x, p);
-    if (p == 1 || x == 0) return 0;
+    if (p == 1 || x == 0) {
+        throw std::runtime_error("Division by zero in mod_inverse_sym(" + std::to_string(x) + ", " + std::to_string(p) + ")");
+    }
     // Алгоритм Евклида
     while (x > 1) {
         q = x / p1; // Частное
@@ -232,6 +235,33 @@ SymRnsFixed& SymRnsFixed::operator*=(const SymRnsFixed& y) {
     std::cout << std::endl;
 
     return *this;
+}
+
+SymRnsFixed& SymRnsFixed::operator/=(const SymRnsFixed& y) {
+    SymRnsFixed S_rns{base.get().S, base};
+    for (size_t i = 0; i < a.size(); ++i) { // a * S
+        a[i] = mod(a[i] * S_rns.a[i], base.get().p[i]);
+    }
+
+    std::cout << "RAW=" << to_positional_frac_crt_unscaled();
+    // масштабирование на y
+    Positional_Int y_int = y.to_positional_frac_crt_unscaled();
+    Positional_Int remainder = get_remainder(y_int);
+    std::cout << " REM=" << remainder;
+
+    SymRnsFixed remainder_rns{remainder, base};
+    *this -= remainder_rns;
+    std::cout << " WO_REM=" << to_positional_frac_crt_unscaled() << ' ' << *this;
+    div_int(y);
+
+    std::cout << std::endl;
+    return *this;
+}
+
+SymRnsFixed SymRnsFixed::operator/(const SymRnsFixed& y) const {
+    SymRnsFixed res{*this};
+    res /= y;
+    return res;
 }
 
 SymRnsFixed SymRnsFixed::operator*(const SymRnsFixed& y) const {

@@ -105,16 +105,39 @@ int main(void) {
 
     // примеры использования fixed point
     Positional_Int a_int = 36; // 90/S
-    Positional_Int b_int = 38; // 100/S
+    Positional_Int b_int = -38; // 100/S
     SymRnsFixed a{a_int, base};
     SymRnsFixed b{b_int, base};
-    SymRnsFixed c = a * b;
-    Positional_Float c_fl = c.to_positional_frac_crt();
+    //SymRnsFixed c = a * b;
+    Positional_Float c_fl = 0; //// = c.to_positional_frac_crt();
 
     Positional_Float a_fl = static_cast<Positional_Float>(a_int) / S; // 90/S
     Positional_Float b_fl = static_cast<Positional_Float>(b_int) / S; // 100/S
     Positional_Float cc_fl = a_fl * b_fl;
     Positional_Float eps = std::abs(c_fl - cc_fl);
+
+    // if (eps > prec) {
+    //     ok = false;
+    //     std::cout << "ОШИБКА: ";
+    // } else {
+    //     std::cout << "OK: ";
+    // }
+    // std::cout << c_fl << " ? " << cc_fl << " eps=" << eps <<
+    //         " prec=" << prec << std::endl;
+
+    // std::cout << a.to_positional_crt() << '*' << b.to_positional_crt() << '=' << c.to_positional_crt() << ' ' << c << std::endl << std::endl;
+
+    // деление
+    a_int = 62; // 90/S
+    b_int = -29; // 100/S
+    a_fl = static_cast<Positional_Float>(a_int) / S; // 90/S
+    b_fl = static_cast<Positional_Float>(b_int) / S; // 100/S
+    a = SymRnsFixed{a_int, base};
+    b = SymRnsFixed{b_int, base};
+    cc_fl = a_fl / b_fl;
+    SymRnsFixed c = a / b;
+    c_fl = c.to_positional_frac_crt();
+    eps = std::abs(c_fl - cc_fl);
 
     if (eps > prec) {
         ok = false;
@@ -125,7 +148,7 @@ int main(void) {
     std::cout << c_fl << " ? " << cc_fl << " eps=" << eps <<
             " prec=" << prec << std::endl;
 
-    std::cout << a.to_positional_crt() << '*' << b.to_positional_crt() << '=' << c.to_positional_crt() << ' ' << c << std::endl;
+    std::cout << a.to_positional_crt() << '/' << b.to_positional_crt() << '=' << c.to_positional_crt() << ' ' << c << std::endl << std::endl;
 
     // сортировка
     constexpr size_t VSIZE = 10;

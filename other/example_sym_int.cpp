@@ -1,7 +1,5 @@
-#include <iostream>
-#include <vector>
-#include <iomanip>
 #include "SymRNS.cpp"
+#include <iostream>
 
 int main() {
     SymRnsBase base{{3, 7, 11}};

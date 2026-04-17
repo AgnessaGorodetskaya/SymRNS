@@ -1,6 +1,6 @@
 *
 !*/
 !*.*
-/*.dSYM
+*.dSYM
 .DS_Store
 /.vscode/settings.json

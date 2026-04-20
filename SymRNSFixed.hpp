@@ -22,6 +22,7 @@ class SymRnsBase {
     std::vector<Positional_Int> Pi;   // P / p[i]
     Positional_Int S;  // коэф масштабирования
     SymRnsBase(const Modules& p0, Positional_Int S0);  // конструктор из вектора оснований
+    bool has_mod_inverse_sym(Positional_Int x);  // существует ли обратное по модулю в данном базисе
 };
 
 // класс представления числа в ССОК

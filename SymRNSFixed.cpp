@@ -35,6 +35,16 @@ SymRnsBase::SymRnsBase(const Modules& p0, Positional_Int S0) :
     }
 }
 
+bool SymRnsBase::has_mod_inverse_sym(Positional_Int x)
+{
+    for (Module pi : p) {
+        if (x % pi == 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 Positional_Float SymRnsFixed::to_positional_crt() const {
     Positional_Int sm = 0;
     for (size_t i = 0; i < a.size(); ++i) {

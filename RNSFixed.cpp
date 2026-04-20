@@ -80,7 +80,7 @@ Positional_Float RnsFixed::to_positional_frac_crt() const {
 Positional_Int RnsFixed::get_rank() const {
     Positional_Float pos_float = frac_crt_sum();
     Positional_Int rank = static_cast<Positional_Int>(pos_float);
-    std::cout << " Rank=" << rank << " Pos_Float=" << pos_float << std::endl;
+    // std::cout << " Rank=" << rank << " Pos_Float=" << pos_float << std::endl;
     return rank;
 }
 
@@ -196,10 +196,10 @@ RnsFixed RnsFixed::operator-() const {
 void RnsFixed::div_int(const RnsFixed& y) {  // деление нацело (когда точно делится)
     for (size_t i = 0; i < a.size(); ++i) {
         Positional_Int Si = RnsFixed::mod_inverse(y.a[i], base.get().p[i]);
-        std::cout << ' ' << Si;
+        // std::cout << ' ' << Si;
         a[i] = mod(a[i] * Si, base.get().p[i]);
     }
-    std::cout << std::endl;
+    // std::cout << std::endl;
 }
 
 bool RnsFixed::operator<(const RnsFixed &y) const
@@ -216,10 +216,10 @@ RnsFixed& RnsFixed::operator*=(const RnsFixed& y) {
         a[i] = mod(a[i] * y.a[i], base.get().p[i]);
     }
 
-    std::cout << "RAW=" << to_positional_frac_crt();
+    // std::cout << "RAW=" << to_positional_frac_crt_unscaled();
     // масштабирование на S
     Positional_Int remainder = get_remainder(base.get().S);
-    std::cout << " REM=" << remainder;
+    // std::cout << " REM=" << remainder;
 
     if (remainder < base.get().S / 2) {  // округление к ближайшему
         RnsFixed remainder_rns{remainder, base};
@@ -228,13 +228,13 @@ RnsFixed& RnsFixed::operator*=(const RnsFixed& y) {
         RnsFixed remainder_rns{base.get().S - remainder, base};
         *this += remainder_rns;
     }
-    std::cout << " WO_REM=" << to_positional_frac_crt() << ' ' << *this;
+    // std::cout << " WO_REM=" << to_positional_frac_crt_unscaled();
 
     RnsFixed S_rns{base.get().S, base};
-    std::cout << " S=" << S_rns;
+    // std::cout << " S=" << S_rns;
     div_int(S_rns);
 
-    std::cout << std::endl;
+    // std::cout << std::endl;
     return *this;
 }
 
@@ -244,11 +244,11 @@ RnsFixed& RnsFixed::operator/=(const RnsFixed& y) {
         a[i] = mod(a[i] * S_rns.a[i], base.get().p[i]);
     }
 
-    std::cout << "RAW=" << to_positional_frac_crt_unscaled();
+    // std::cout << "RAW=" << to_positional_frac_crt_unscaled();
     // масштабирование на y
     Positional_Int y_int = y.to_positional_frac_crt_unscaled();
     Positional_Int remainder = get_remainder(y_int);
-    std::cout << " REM=" << remainder;
+    // std::cout << " REM=" << remainder;
 
     if (remainder < y_int / 2) {  // округление к ближайшему
         RnsFixed remainder_rns{remainder, base};
@@ -257,10 +257,10 @@ RnsFixed& RnsFixed::operator/=(const RnsFixed& y) {
         RnsFixed remainder_rns{y_int - remainder, base};
         *this += remainder_rns;
     }
-    std::cout << " WO_REM=" << to_positional_frac_crt_unscaled() << ' ' << *this;
+    // std::cout << " WO_REM=" << to_positional_frac_crt_unscaled();
     div_int(y);
 
-    std::cout << std::endl;
+    // std::cout << std::endl;
     return *this;
 }
 

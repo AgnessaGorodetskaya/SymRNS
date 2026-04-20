@@ -51,7 +51,6 @@ Positional_Float SymRnsFixed::to_positional_crt() const {
         sm += a[i] * base.get().B[i];
     }
     Positional_Int A = mod_sym(sm, base.get().P);
-    // Module rank = static_cast<Module>((sm - A) / base.get().P);
     // std::cout << std::endl << "ORT: " << sm << " mod_sym " << base.get().P << " = " << A << ", ранг=" << rank <<std::endl;
     return (static_cast<Positional_Float>(A) / base.get().S);  // по симметричному модулю динамического диапазона
 }
@@ -59,8 +58,7 @@ Positional_Float SymRnsFixed::to_positional_crt() const {
 Positional_Float SymRnsFixed::frac_crt_sum() const {
     Positional_Float pos_float = 0;
     for (size_t i = 0; i < a.size(); ++i) {
-        pos_float += static_cast<Positional_Float>(mod_sym(a[i] * base.get().m[i], base.get().p[i])) / base.get().p[i];
-        // pos_float += static_cast<Positional_Float>(a[i] * base.get().m[i]) / base.get().p[i];
+        pos_float += static_cast<Positional_Float>(mod_sym(a[i] * base.get().m[i], base.get().p[i]) * 2) / base.get().p[i];
     }
     return pos_float;
 }
@@ -68,32 +66,42 @@ Positional_Float SymRnsFixed::frac_crt_sum() const {
 Positional_Int SymRnsFixed::to_positional_frac_crt_unscaled() const {
     Positional_Float pos_float = frac_crt_sum(), int_part;
     pos_float = std::modf(pos_float, &int_part);
-    if (pos_float > 0.5) { pos_float -= 1.0; }
-    else if (pos_float < -0.5) { pos_float += 1.0; }
+    Positional_Int rank2x = static_cast<Positional_Int>(int_part);
+    if (rank2x & 1) {  // нечетный
+        if (rank2x > 0) { pos_float -= 1.0; }
+        else { pos_float += 1.0; }
+    }
     pos_float *= base.get().P;
     Positional_Int pos_int = static_cast<Positional_Int>(std::round(pos_float));
-    return pos_int;
+    if (pos_int & 1) throw std::runtime_error("2x pos_int is not even");
+    return pos_int / 2;
 }
 
 Positional_Float SymRnsFixed::to_positional_frac_crt() const {
     Positional_Float pos_float = frac_crt_sum(), int_part;
     pos_float = std::modf(pos_float, &int_part);
-    if (pos_float > 0.5) { pos_float -= 1.0; }
-    else if (pos_float < -0.5) { pos_float += 1.0; }
-    // std::cout << pos_float << std::endl;
+    Positional_Int rank2x = static_cast<Positional_Int>(int_part);
+    if (rank2x & 1) {  // нечетный
+        if (rank2x > 0) { pos_float -= 1.0; }
+        else { pos_float += 1.0; }
+    }
+    // std::cout << rank2x << ' ' << pos_float << std::endl;
     pos_float *= base.get().P;
-    pos_float /= base.get().S;
+    pos_float /= base.get().S * 2;
     return pos_float;
 }
 
 Positional_Int SymRnsFixed::get_rank() const {
     Positional_Float pos_float = frac_crt_sum(), int_part;
-    std::cout << " get_rank(): " << pos_float;
+    // std::cout << " get_rank(): " << pos_float;
     pos_float = std::modf(pos_float, &int_part);
-    Positional_Int rank = static_cast<Positional_Int>(int_part);
-    if (pos_float > 0.5) { pos_float -= 1.0; ++rank; }
-    else if (pos_float < -0.5) { pos_float += 1.0; --rank; }
-    std::cout << " Rank=" << rank << " Pos_Float=" << pos_float << std::endl;
+    Positional_Int rank2x = static_cast<Positional_Int>(int_part);
+    if (rank2x & 1) {  // нечетный
+        if (rank2x > 0) { pos_float -= 1.0; ++rank2x; }
+        else { pos_float += 1.0; --rank2x; }
+    }
+    Positional_Int rank = rank2x / 2;
+    // std::cout << " Rank=" << rank << " Pos_Float=" << pos_float << std::endl;
     return rank;
 }
 
@@ -217,10 +225,8 @@ SymRnsFixed SymRnsFixed::operator-() const {
 void SymRnsFixed::div_int(const SymRnsFixed& y) {  // деление нацело (когда точно делится)
     for (size_t i = 0; i < a.size(); ++i) {
         Positional_Int Si = mod_inverse_sym(y.a[i], base.get().p[i]);
-        std::cout << ' ' << Si;
-        a[i] = mod(a[i] * Si, base.get().p[i]);
+        a[i] = mod_sym(a[i] * Si, base.get().p[i]);
     }
-    std::cout << std::endl;
 }
 
 SymRnsFixed& SymRnsFixed::operator*=(const SymRnsFixed& y) {
@@ -228,43 +234,39 @@ SymRnsFixed& SymRnsFixed::operator*=(const SymRnsFixed& y) {
         a[i] = mod_sym(a[i] * y.a[i], base.get().p[i]);
     }
 
-    std::cout << "RAW=" << to_positional_crt();
+    // std::cout << "RAW=" << to_positional_frac_crt_unscaled();
     // масштабирование на S
     Positional_Int remainder = get_remainder(base.get().S);
-    std::cout << " REM=" << remainder;
+    // std::cout << " REM=" << remainder;
 
     SymRnsFixed remainder_rns{remainder, base};
     *this -= remainder_rns;
-
-    std::cout << " WO_REM=" << to_positional_crt() << ' ' << *this;
-
+    // std::cout << " WO_REM=" << to_positional_frac_crt_unscaled();
     SymRnsFixed S_rns{base.get().S, base};
-    std::cout << " S=" << S_rns;
     div_int(S_rns);
 
-    std::cout << std::endl;
-
+    // std::cout << std::endl;
     return *this;
 }
 
 SymRnsFixed& SymRnsFixed::operator/=(const SymRnsFixed& y) {
     SymRnsFixed S_rns{base.get().S, base};
     for (size_t i = 0; i < a.size(); ++i) { // a * S
-        a[i] = mod(a[i] * S_rns.a[i], base.get().p[i]);
+        a[i] = mod_sym(a[i] * S_rns.a[i], base.get().p[i]);
     }
 
-    std::cout << "RAW=" << to_positional_frac_crt_unscaled();
+    // std::cout << "RAW=" << to_positional_frac_crt_unscaled();
     // масштабирование на y
     Positional_Int y_int = y.to_positional_frac_crt_unscaled();
     Positional_Int remainder = get_remainder(y_int);
-    std::cout << " REM=" << remainder;
+    // std::cout << " REM=" << remainder;
 
     SymRnsFixed remainder_rns{remainder, base};
     *this -= remainder_rns;
-    std::cout << " WO_REM=" << to_positional_frac_crt_unscaled() << ' ' << *this;
+    // std::cout << " WO_REM=" << to_positional_frac_crt_unscaled();
     div_int(y);
 
-    std::cout << std::endl;
+    // std::cout << std::endl;
     return *this;
 }
 
@@ -297,12 +299,18 @@ bool SymRnsFixed::operator<(const SymRnsFixed &y) const
     Positional_Float x_fl = frac_crt_sum(), y_fl = y.frac_crt_sum(), int_part;
 
     x_fl = std::modf(x_fl, &int_part);
-    if (x_fl > 0.5) { x_fl -= 1.0; }
-    else if (x_fl < -0.5) { x_fl += 1.0; }
+    Positional_Int rank2x = static_cast<Positional_Int>(int_part);
+    if (rank2x & 1) {  // нечетный
+        if (rank2x > 0) { x_fl -= 1.0;  }
+        else { x_fl += 1.0; }
+    }
 
     y_fl = std::modf(y_fl, &int_part);
-    if (y_fl > 0.5) { y_fl -= 1.0; }
-    else if (y_fl < -0.5) { y_fl += 1.0; }
+    rank2x = static_cast<Positional_Int>(int_part);
+    if (rank2x & 1) {  // нечетный
+        if (rank2x > 0) { y_fl -= 1.0;  }
+        else { y_fl += 1.0; }
+    }
 
     return (x_fl < y_fl);
 }

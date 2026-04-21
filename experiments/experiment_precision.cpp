@@ -1,7 +1,7 @@
 #include <vector>
 #include <iomanip>
-#include "SymRNSFixed.cpp"
-#include "RNSFixed.cpp"
+#include "../SymRNSFixed.cpp"
+#include "../RNSFixed.cpp"
 
 int main(void) {
     constexpr Positional_Int S = 10000; // коэффициент масштабирования (должен быть не кратен ни одному из оснований)
@@ -30,28 +30,25 @@ int main(void) {
     // ССОК
     SymRnsFixed a_srns_orig{a_int_orig, srns_base}; // ССОК 1/10000
     SymRnsFixed a_srns = a_srns_orig; // ССОК 1/10000
-    for (Positional_Int b_int = 2; b_int <= b_max; ++b_int) {
-        if (srns_base.has_mod_inverse_sym(b_int)) {
-            SymRnsFixed b_srns{b_int, srns_base};
-            a_srns /= b_srns;
-            a_srns *= b_srns;
-            if (a_srns != a_srns_orig) {
-                std::cout << "ССОК Фикс.точка: " << b_int << ' ' << std::setprecision(100) << a_srns.to_positional_frac_crt_unscaled() << std::endl;
-                break;
-            }
-        }
-    }
-
     // СОК
     RnsFixed a_rns_orig{a_int_orig, rns_base}; // СОК 1/10000
     RnsFixed a_rns = a_rns_orig; // СОК 1/10000
     for (Positional_Int b_int = 2; b_int <= b_max; ++b_int) {
         if (srns_base.has_mod_inverse_sym(b_int)) {
+            SymRnsFixed b_srns{b_int, srns_base};
+            a_srns /= b_srns;
+            std::cout << "ССОК Фикс.точка: " << b_int << ' ' << std::setprecision(100) << a_srns.to_positional_frac_crt_unscaled() << std::endl;
+            a_srns *= b_srns;
+            // std::cout << "ССОК Фикс.точка: " << b_int << ' ' << std::setprecision(100) << a_srns.to_positional_frac_crt_unscaled() << std::endl;
+            if (a_srns != a_srns_orig) {
+                break;
+            }
             RnsFixed b_rns{b_int, rns_base};
             a_rns /= b_rns;
+            std::cout << " СОК Фикс.точка: " << b_int << ' ' << std::setprecision(100) << a_rns.to_positional_frac_crt_unscaled() << std::endl;
             a_rns *= b_rns;
+            // std::cout << " СОК Фикс.точка: " << b_int << ' ' << std::setprecision(100) << a_rns.to_positional_frac_crt_unscaled() << std::endl;
             if (a_rns != a_rns_orig) {
-                std::cout << "СОК Фикс.точка: " << b_int << ' ' << std::setprecision(100) << a_rns.to_positional_frac_crt_unscaled() << std::endl;
                 break;
             }
         }

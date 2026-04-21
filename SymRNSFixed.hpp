@@ -59,10 +59,12 @@ class SymRnsFixed {
     void div_int(const SymRnsFixed& y);  // деление нацело (когда точно делится)
     friend std::ostream& operator<<(std::ostream& os, const SymRnsFixed& y);  // для вывода на cout
     Positional_Float frac_crt_sum() const; // дробная сумма дробной CRT
-    Positional_Int to_positional_frac_crt_unscaled() const;  // в позиционное представление (немасштабированное целое)
+    Positional_Float to_positional_frac_crt_unscaled() const;  // в позиционное представление (немасштабированное дробное)
     Positional_Float to_positional_frac_crt() const;  // в позиционное представление через дробную CRT
     Positional_Float to_positional_crt() const;  // в позиционное представление CRT
     Positional_Float to_positional_mrc() const;  // в позиционное представление MRC
     Positional_Int get_rank() const; // получение ранга числа
     Positional_Int get_remainder(Positional_Int divisor) const; // остаток от деления
+protected:
+    Positional_Float to_positional_frac_crt_unscaled2x() const;  // в позиционное представление (удвоенное немасштабированное дробное)
 };

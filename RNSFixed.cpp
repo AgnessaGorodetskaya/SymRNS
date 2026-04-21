@@ -60,19 +60,16 @@ Positional_Float RnsFixed::frac_crt_sum() const {
     return pos_float;
 }
 
-Positional_Int RnsFixed::to_positional_frac_crt_unscaled() const {
+Positional_Float RnsFixed::to_positional_frac_crt_unscaled() const {
     Positional_Float pos_float = frac_crt_sum(), int_part;
     pos_float = std::modf(pos_float, &int_part);
     pos_float *= base.get().P;
-    Positional_Int pos_int = static_cast<Positional_Int>(std::round(pos_float));
-    // std::cout << ' ' << pos_int << std::endl;
-    return pos_int;
+    // std::cout << ' ' << pos_float << std::endl;
+    return pos_float;
 }
 
 Positional_Float RnsFixed::to_positional_frac_crt() const {
-    Positional_Float pos_float = frac_crt_sum(), int_part;
-    pos_float = std::modf(pos_float, &int_part);
-    pos_float *= base.get().P;
+    Positional_Float pos_float = to_positional_frac_crt_unscaled();
     pos_float /= base.get().S;
     return pos_float;
 }
@@ -219,12 +216,15 @@ RnsFixed& RnsFixed::operator*=(const RnsFixed& y) {
     // std::cout << "RAW=" << to_positional_frac_crt_unscaled();
     // масштабирование на S
     Positional_Int remainder = get_remainder(base.get().S);
-    // std::cout << " REM=" << remainder;
+    // std::cout << " REM=" << remainder << std::endl;
 
     if (remainder < base.get().S / 2) {  // округление к ближайшему
         RnsFixed remainder_rns{remainder, base};
         *this -= remainder_rns;
     } else {
+        if (remainder == base.get().S / 2) {
+            std::cout << "!!!!DEBUG: remainder == S/2" << std::endl;
+        }
         RnsFixed remainder_rns{base.get().S - remainder, base};
         *this += remainder_rns;
     }
@@ -234,7 +234,6 @@ RnsFixed& RnsFixed::operator*=(const RnsFixed& y) {
     // std::cout << " S=" << S_rns;
     div_int(S_rns);
 
-    // std::cout << std::endl;
     return *this;
 }
 
@@ -246,21 +245,23 @@ RnsFixed& RnsFixed::operator/=(const RnsFixed& y) {
 
     // std::cout << "RAW=" << to_positional_frac_crt_unscaled();
     // масштабирование на y
-    Positional_Int y_int = y.to_positional_frac_crt_unscaled();
+    Positional_Int y_int = static_cast<Positional_Int>(std::round(y.to_positional_frac_crt_unscaled()));
     Positional_Int remainder = get_remainder(y_int);
-    // std::cout << " REM=" << remainder;
+    // std::cout << " REM=" << remainder << std::endl;
 
     if (remainder < y_int / 2) {  // округление к ближайшему
         RnsFixed remainder_rns{remainder, base};
         *this -= remainder_rns;
     } else {
+        if (remainder == y_int / 2) {
+            std::cout << "!!!!DEBUG: remainder == divider/2" << std::endl;
+        }
         RnsFixed remainder_rns{y_int - remainder, base};
         *this += remainder_rns;
     }
     // std::cout << " WO_REM=" << to_positional_frac_crt_unscaled();
     div_int(y);
 
-    // std::cout << std::endl;
     return *this;
 }
 

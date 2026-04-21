@@ -49,7 +49,7 @@ class RnsFixed {
     bool operator<(const RnsFixed& y) const; // сравнение
     friend std::ostream& operator<<(std::ostream& os, const RnsFixed& y);  // для вывода на cout
     Positional_Float frac_crt_sum() const;  // дробная сумма дробной CRT
-    Positional_Int to_positional_frac_crt_unscaled() const;  // в позиционное представление через дробную CRT (без масштабирования)
+    Positional_Float to_positional_frac_crt_unscaled() const;  // в позиционное представление через дробную CRT (без масштабирования)
     Positional_Float to_positional_frac_crt() const;  // в позиционное представление через дробную CRT
     Positional_Float to_positional_crt() const;  // в позиционное представление CRT
     Positional_Float to_positional_mrc() const;  // в позиционное представление MRC

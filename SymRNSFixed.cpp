@@ -63,7 +63,7 @@ Positional_Float SymRnsFixed::frac_crt_sum() const {
     return pos_float;
 }
 
-Positional_Int SymRnsFixed::to_positional_frac_crt_unscaled() const {
+Positional_Float SymRnsFixed::to_positional_frac_crt_unscaled2x() const {
     Positional_Float pos_float = frac_crt_sum(), int_part;
     pos_float = std::modf(pos_float, &int_part);
     Positional_Int rank2x = static_cast<Positional_Int>(int_part);
@@ -72,22 +72,16 @@ Positional_Int SymRnsFixed::to_positional_frac_crt_unscaled() const {
         else { pos_float += 1.0; }
     }
     pos_float *= base.get().P;
-    Positional_Int pos_int = static_cast<Positional_Int>(std::round(pos_float));
-    if (pos_int & 1) throw std::runtime_error("2x pos_int is not even");
-    return pos_int / 2;
+    return pos_float;
+}
+
+Positional_Float SymRnsFixed::to_positional_frac_crt_unscaled() const {
+    return to_positional_frac_crt_unscaled2x() / 2.0;
 }
 
 Positional_Float SymRnsFixed::to_positional_frac_crt() const {
-    Positional_Float pos_float = frac_crt_sum(), int_part;
-    pos_float = std::modf(pos_float, &int_part);
-    Positional_Int rank2x = static_cast<Positional_Int>(int_part);
-    if (rank2x & 1) {  // нечетный
-        if (rank2x > 0) { pos_float -= 1.0; }
-        else { pos_float += 1.0; }
-    }
-    // std::cout << rank2x << ' ' << pos_float << std::endl;
-    pos_float *= base.get().P;
-    pos_float /= base.get().S * 2;
+    Positional_Float pos_float = to_positional_frac_crt_unscaled2x();
+    pos_float /= base.get().S << 1;
     return pos_float;
 }
 
@@ -257,7 +251,10 @@ SymRnsFixed& SymRnsFixed::operator/=(const SymRnsFixed& y) {
 
     // std::cout << "RAW=" << to_positional_frac_crt_unscaled();
     // масштабирование на y
-    Positional_Int y_int = y.to_positional_frac_crt_unscaled();
+    Positional_Int y_int_2x = static_cast<Positional_Int>(std::round(y.to_positional_frac_crt_unscaled2x()));
+    if (y_int_2x & 1) throw std::runtime_error("2x y_int is not even");
+    Positional_Int y_int = y_int_2x / 2;
+
     Positional_Int remainder = get_remainder(y_int);
     // std::cout << " REM=" << remainder;
 

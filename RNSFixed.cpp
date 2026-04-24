@@ -223,7 +223,7 @@ RnsFixed& RnsFixed::operator*=(const RnsFixed& y) {
         *this -= remainder_rns;
     } else {
         if (remainder == base.get().S / 2) {
-            std::cout << "!!!!DEBUG: remainder == S/2" << std::endl;
+            std::cout << "!!!! СОК: Остаток == S/2" << std::endl;
         }
         RnsFixed remainder_rns{base.get().S - remainder, base};
         *this += remainder_rns;
@@ -254,7 +254,7 @@ RnsFixed& RnsFixed::operator/=(const RnsFixed& y) {
         *this -= remainder_rns;
     } else {
         if (remainder == y_int / 2) {
-            std::cout << "!!!!DEBUG: remainder == divider/2" << std::endl;
+            std::cout << "!!!! СОК: Остаток == divider/2" << std::endl;
         }
         RnsFixed remainder_rns{y_int - remainder, base};
         *this += remainder_rns;

@@ -21,26 +21,35 @@ int main(void) {
     Positional_Int res_int = 0; // накопленный результат в позиционной
     Positional_Int num_iter = 0; // число итераций
 
+    // подбор подходящих множителей
+    std::vector<Positional_Int> b_int_vec;
     for (Positional_Int z_int = 2; z_int <= 101; ++z_int) {
-        Positional_Int b_int_raw = z_int * S + S / 2;
-        if (b_int_raw % a_int == 0) {
-            Positional_Int b_int = b_int_raw / a_int;
-
-            std::cout << "A(" << a_int << ") * B(" << b_int << ") / S(" << S << ')' << std::endl;
-            SymRnsFixed b_srns{b_int, srns_base};
-            RnsFixed b_rns{b_int, rns_base};
-
-            SymRnsFixed mul_srns = a_srns * b_srns;
-            res_srns += mul_srns;
-            std::cout << "ССОК Фикс.точка: " << std::fixed << std::setprecision(PRECISION) << mul_srns.to_positional_frac_crt_unscaled() << std::endl;
-
-            RnsFixed mul_rns = a_rns * b_rns;
-            res_rns += mul_rns;
-            std::cout << " СОК Фикс.точка: " << std::fixed << std::setprecision(PRECISION) << mul_rns.to_positional_frac_crt_unscaled() << std::endl << std::endl;
-
-            res_int += a_int * b_int;
-            ++num_iter;
+        Positional_Int b_int = z_int * S + S / 2;
+        if (b_int % a_int == 0) {
+                b_int /= a_int;
+                std::cout << "z_int = " << z_int << " b_int = " << b_int << std::endl;
+                b_int_vec.push_back(b_int);
         }
+    }
+
+    for (size_t i = 0; i < 1000; ++i) {  // цикл итераций
+        // произвольный делитель из подходящих под S/2
+        Positional_Int b_int = b_int_vec[static_cast<size_t>(std::rand()) % b_int_vec.size()];
+
+        std::cout << "A(" << a_int << ") * B(" << b_int << ") / S(" << S << ')' << std::endl;
+        SymRnsFixed b_srns{b_int, srns_base};
+        RnsFixed b_rns{b_int, rns_base};
+
+        SymRnsFixed mul_srns = a_srns * b_srns;
+        res_srns += mul_srns;
+        std::cout << "ССОК Фикс.точка: " << std::fixed << std::setprecision(PRECISION) << mul_srns.to_positional_frac_crt_unscaled() << std::endl;
+
+        RnsFixed mul_rns = a_rns * b_rns;
+        res_rns += mul_rns;
+        std::cout << " СОК Фикс.точка: " << std::fixed << std::setprecision(PRECISION) << mul_rns.to_positional_frac_crt_unscaled() << std::endl << std::endl;
+
+        res_int += a_int * b_int;
+        ++num_iter;
     }
 
     if (res_int % (S * S) != 0) {

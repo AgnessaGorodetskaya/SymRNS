@@ -21,19 +21,21 @@ int main(void) {
     Positional_Float res_fp = 0; // накопленный результат в позиционной
     Positional_Int num_iter = 0; // число итераций
 
+    // подбор подходящих делителей
     std::vector<Positional_Int> b_int_vec;
-    for (Positional_Int z_int = 2; z_int <= 10000; ++z_int) {
+    for (Positional_Int z_int = 62; z_int <= 10000; ++z_int) {
         Positional_Int b_int = 2 * a_int * S;
         if (b_int % (2 * z_int + 1) == 0) {
             b_int /= (2 * z_int + 1);
             if (b_int % 2 == 0 && srns_base.has_mod_inverse_sym(b_int)) {
+                std::cout << "z_int = " << z_int << " b_int = " << b_int << std::endl;
                 b_int_vec.push_back(b_int);
             }
         }
     }
-    std::cout << "Найдено подходящих делителей: " << b_int_vec.size() << std::endl;
 
-    for (int i = 0; i < 100; ++i) {  // цикл итераций
+    for (size_t i = 0; i < 1000; ++i) {  // цикл итераций
+        // произвольный делитель из подходящих под B/2
         Positional_Int b_int = b_int_vec[static_cast<size_t>(std::rand()) % b_int_vec.size()];
 
         std::cout << "A(" << a_int << ") * S(" << S << ") / B(" << b_int << ')' << std::endl;

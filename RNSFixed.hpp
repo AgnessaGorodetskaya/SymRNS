@@ -3,9 +3,9 @@
 #include <numeric>
 #include <vector>
 
-typedef int32_t Positional_Int;       // позиционное целочисленное
+typedef int64_t Positional_Int;       // позиционное целочисленное
 typedef double Positional_Float;       // позиционное вещественное
-typedef int16_t Module;               // целочисленный модуль разряда ССОК
+typedef int32_t Module;               // целочисленный модуль разряда ССОК
 typedef std::vector<Module> Modules;  // вектор модулей разрядов ССОК
 
 // класс оснований СОК

@@ -55,7 +55,6 @@ Positional_Float RnsFixed::frac_crt_sum() const {
     Positional_Float pos_float = 0;
     for (size_t i = 0; i < a.size(); ++i) {
         pos_float += static_cast<Positional_Float>(mod(a[i] * base.get().m[i], base.get().p[i])) / base.get().p[i];
-        // res += static_cast<Positional_Float>(a[i] * base.get().m[i]) / base.get().p[i];
     }
     return pos_float;
 }
@@ -223,7 +222,7 @@ RnsFixed& RnsFixed::operator*=(const RnsFixed& y) {
         *this -= remainder_rns;
     } else {
         if (remainder == base.get().S / 2) {
-            std::cout << "!!!! СОК: Остаток == S/2" << std::endl;
+            std::cout << "[!!! СОК: Остаток при умножении == S/2 !!!]";
         }
         RnsFixed remainder_rns{base.get().S - remainder, base};
         *this += remainder_rns;
@@ -254,12 +253,12 @@ RnsFixed& RnsFixed::operator/=(const RnsFixed& y) {
         *this -= remainder_rns;
     } else {
         if (remainder == y_int / 2) {
-            std::cout << "!!!! СОК: Остаток == divider/2" << std::endl;
+            std::cout << "[!!! СОК: Остаток при делении == divider/2 !!!]";
         }
         RnsFixed remainder_rns{y_int - remainder, base};
         *this += remainder_rns;
     }
-    // std::cout << " WO_REM=" << to_positional_frac_crt_unscaled();
+    // std::cout << " WO_REM=" << to_positional_frac_crt_unscaled() << std::endl;
     div_int(y);
 
     return *this;

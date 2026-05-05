@@ -103,7 +103,8 @@ Positional_Int SymRnsFixed::get_remainder(Positional_Int divisor) const {
     if (divisor < 0) divisor = -divisor;
     Positional_Int rem_int = 0;
     for (size_t i = 0; i < a.size(); ++i) {
-        rem_int += mod_sym(base.get().Pi[i] * mod_sym(a[i] * base.get().m[i], base.get().p[i]), divisor);
+        Module ms = mod_sym(a[i] * base.get().m[i], base.get().p[i]);
+        rem_int += mod_sym(base.get().Pi[i] * ms, divisor);
     }
     Positional_Int rank = get_rank();
     rem_int -= mod_sym(rank * base.get().P, divisor);
@@ -218,8 +219,8 @@ SymRnsFixed SymRnsFixed::operator-() const {
 
 void SymRnsFixed::div_int(const SymRnsFixed& y) {  // деление нацело (когда точно делится)
     for (size_t i = 0; i < a.size(); ++i) {
-        Positional_Int Si = mod_inverse_sym(y.a[i], base.get().p[i]);
-        a[i] = mod_sym(a[i] * Si, base.get().p[i]);
+            Positional_Int Si = mod_inverse_sym(y.a[i], base.get().p[i]);
+            a[i] = mod_sym(a[i] * Si, base.get().p[i]);
     }
 }
 
@@ -256,11 +257,11 @@ SymRnsFixed& SymRnsFixed::operator/=(const SymRnsFixed& y) {
     Positional_Int y_int = y_int_2x / 2;
 
     Positional_Int remainder = get_remainder(y_int);
-    // std::cout << " REM=" << remainder;
-
     SymRnsFixed remainder_rns{remainder, base};
+    // std::cout << " REM=" << remainder_rns << remainder;
+
     *this -= remainder_rns;
-    // std::cout << " WO_REM=" << to_positional_frac_crt_unscaled();
+    // std::cout << " WO_REM=" << *this << to_positional_frac_crt_unscaled();
     div_int(y);
 
     // std::cout << std::endl;

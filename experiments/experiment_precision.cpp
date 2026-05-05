@@ -8,7 +8,7 @@
 
 int main(void) {
     constexpr Positional_Int S = 10000; // коэффициент масштабирования (должен быть не кратен ни одному из оснований)
-    constexpr Positional_Int a_pos = 10000; // A начальное
+    constexpr Positional_Int a_pos = 5555; // A начальное
     SymRnsBase srns_base{{59, 61, 67, 71, 73}, S}; // набор оснований ССОК
     RnsBase rns_base{{59, 61, 67, 71, 73}, S}; // набор оснований СОК
 
@@ -78,8 +78,8 @@ int main(void) {
         }
     }
 
-    std::cout << std::format("A начальное                : {}/{}\n", a_pos, S);
-    std::cout << std::format("B максимальное             : {}/{}\n", b_max, S);
+    std::cout << std::format("Начальное значение         : {}/{}\n", a_pos, S);
+    std::cout << std::format("Максимальный делитель      : {}/{}\n", b_max, S);
     std::cout << std::format("Количество итераций        : {}\n", num_iter);
     std::cout << std::format("Накоп.ошибка СОК  фикс.зап.: {}/{}\n", err_rns, S);
     std::cout << std::format("Накоп.ошибка ССОК фикс.зап.: {}/{}\n", err_srns, S);
